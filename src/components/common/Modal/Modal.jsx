@@ -15,22 +15,22 @@ export const Modal = ({
   showCloseButton = true,
 }) => {
   useEffect(() => {
+    if (!isOpen) return;
+
     const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
 
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape);
-      document.body.style.overflow = 'hidden';
-    }
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
 
     return () => {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]); // Only depend on isOpen
 
   if (!isOpen) return null;
 
@@ -47,6 +47,7 @@ export const Modal = ({
               className="modal__close"
               onClick={onClose}
               aria-label="Close modal"
+              type="button"
             >
               <X size={20} />
             </button>

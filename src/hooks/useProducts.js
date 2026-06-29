@@ -41,33 +41,20 @@ export const useProducts = () => {
 
     dispatch({ type: 'DELETE_PRODUCT', payload: id });
     
-    toast.success(
-      (t) => (
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <span>Product deleted</span>
-          <button
-            onClick={() => {
-              dispatch({ type: 'RESTORE_PRODUCT', payload: id });
-              toast.dismiss(t.id);
-              toast.success('Product restored!');
-            }}
-            style={{
-              padding: '4px 12px',
-              background: 'var(--color-primary)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              fontSize: '14px',
-            }}
-          >
-            Undo
-          </button>
-        </div>
-      ),
-      { duration: 5000 }
-    );
+    // Show toast with custom action
+    const toastId = toast.success(`Product "${product.name}" deleted. Click to undo.`, {
+      duration: 5000,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          dispatch({ type: 'RESTORE_PRODUCT', payload: id });
+          toast.dismiss(toastId);
+          toast.success('Product restored!');
+        },
+      },
+    });
 
+    // Auto-purge after 5 seconds if not restored
     setTimeout(() => {
       const currentProduct = state.products.find((p) => p.id === id);
       if (currentProduct?.isDeleted) {

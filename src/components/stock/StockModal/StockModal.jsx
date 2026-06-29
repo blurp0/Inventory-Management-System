@@ -24,11 +24,11 @@ export const StockModal = ({ isOpen, onClose, productId, type }) => {
   const isStockIn = type === 'in';
 
   useEffect(() => {
-    if (isOpen) {
-      setQuantity('');
-      setReason('');
-    }
-  }, [isOpen]);
+    if (!isOpen) return;
+    
+    setQuantity('');
+    setReason('');
+  }, [isOpen]); // Only depend on isOpen
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { InventoryProvider } from './contexts/InventoryContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import AppLayout from './components/layout/AppLayout';
@@ -25,6 +26,18 @@ export default function App() {
             </Route>
           </Routes>
         </BrowserRouter>
+        {/* Toast notifications */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: 'var(--color-surface)',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--color-border)',
+            },
+          }}
+        />
       </InventoryProvider>
     </ThemeProvider>
   );

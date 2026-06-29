@@ -32,6 +32,8 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return; // Only run when modal opens
+    
     if (isEditMode && productId) {
       const product = getProductById(productId);
       if (product) {
@@ -63,7 +65,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
       });
     }
     setErrors({});
-  }, [isOpen, isEditMode, productId, getProductById]);
+  }, [isOpen, productId]); // Removed getProductById and isEditMode from dependencies
 
   const handleChange = (e) => {
     const { name, value } = e.target;

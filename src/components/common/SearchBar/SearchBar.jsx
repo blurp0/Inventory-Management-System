@@ -2,7 +2,7 @@
  * SearchBar.jsx
  * Search input with debounce functionality
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, X } from 'lucide-react';
 import './SearchBar.css';
 
@@ -14,21 +14,27 @@ export const SearchBar = ({
 }) => {
   const [localValue, setLocalValue] = useState(value || '');
 
+  // Sync with external value changes
   useEffect(() => {
     setLocalValue(value || '');
   }, [value]);
 
+  // Debounced search - removed onChange from dependencies
   useEffect(() => {
     const timer = setTimeout(() => {
-      onChange(localValue);
+      if (onChange) {
+        onChange(localValue);
+      }
     }, debounce);
 
     return () => clearTimeout(timer);
-  }, [localValue, debounce, onChange]);
+  }, [localValue, debounce]); // Removed onChange
 
   const handleClear = () => {
     setLocalValue('');
-    onChange('');
+    if (onChange) {
+      onChange('');
+    }
   };
 
   return (
@@ -46,6 +52,7 @@ export const SearchBar = ({
           className="search-bar__clear"
           onClick={handleClear}
           aria-label="Clear search"
+          type="button"
         >
           <X size={16} />
         </button>
