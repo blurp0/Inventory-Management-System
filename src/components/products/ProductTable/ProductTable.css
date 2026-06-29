@@ -1,0 +1,121 @@
+.product-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+.product-table thead {
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.product-table th {
+  padding: 16px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.product-table td {
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-size: 14px;
+}
+
+.product-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.product-table tbody tr:hover {
+  background: var(--color-surface-hover);
+}
+
+.product-sku {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  background: var(--color-background);
+  padding: 4px 8px;
+  border-radius: 4px;
+  color: var(--color-accent);
+}
+
+.product-name {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.product-name strong {
+  font-weight: 500;
+}
+
+.product-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.product-date {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.product-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.product-table-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 32px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  background: var(--color-surface);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.product-table-empty svg {
+  color: var(--color-text-secondary);
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.product-table-empty h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.product-table-empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 1200px) {
+  .product-table {
+    font-size: 13px;
+  }
+  
+  .product-table th,
+  .product-table td {
+    padding: 12px;
+  }
+}
