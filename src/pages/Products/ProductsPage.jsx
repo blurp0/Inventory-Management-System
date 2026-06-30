@@ -2,7 +2,7 @@
  * ProductsPage.jsx
  * Main products page with CRUD operations
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '../../components/common/Button/Button';
 import { SearchBar } from '../../components/common/SearchBar/SearchBar';
@@ -32,6 +32,16 @@ export default function ProductsPage() {
     setEditingProductId(null);
     setIsFormOpen(true);
   };
+
+  useEffect(() => {
+    const handleShortcut = () => {
+      handleAddProduct();
+    };
+    window.addEventListener('shortcut-add-product', handleShortcut);
+    return () => {
+      window.removeEventListener('shortcut-add-product', handleShortcut);
+    };
+  }, []);
 
   const handleEditProduct = (productId) => {
     setEditingProductId(productId);

@@ -3,10 +3,12 @@ import { Toaster } from 'react-hot-toast';
 import Sidebar from './Sidebar/Sidebar';
 import Topbar from './Topbar/Topbar';
 import { useInventory } from '../../contexts/InventoryContext';
+import { useKeyboardShortcuts } from '../../hooks';
 import './AppLayout.css';
 
 export default function AppLayout() {
   const { state } = useInventory();
+  useKeyboardShortcuts();
   const isCollapsed = !state.ui.sidebarOpen;
 
   return (
