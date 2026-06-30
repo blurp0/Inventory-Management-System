@@ -249,16 +249,19 @@ src/
 
 ## 🗺️ Roadmap
 
-### Phase 1 — MVP (Current)
+### Phase 1 — MVP (Current) ✅ COMPLETED
 
 - ✅ Project setup with React 19 + Vite
-- ⏳ Core CRUD operations for products
-- ⏳ Stock In/Out transaction management
-- ⏳ Dashboard with KPI cards and charts
-- ⏳ Search, filter, and sort functionality
-- ⏳ PDF & CSV export
-- ⏳ Dark/Light mode toggle
-- ⏳ Mobile responsive design
+- ✅ Core CRUD operations for products
+- ✅ Stock In/Out transaction management
+- ✅ Dashboard with KPI cards and charts
+- ✅ Search, filter, and sort functionality
+- ✅ PDF & CSV export
+- ✅ Dark/Light mode toggle
+- ✅ Mobile responsive design
+- ✅ Category management system
+- ✅ Confirmation dialogs
+- ✅ Unsaved changes protection
 
 ### Phase 2 — Backend Integration (Future)
 
