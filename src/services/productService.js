@@ -1,83 +1,176 @@
 /**
  * productService.js
- * Business logic for product CRUD operations
+ * Async Supabase-backed product CRUD — replaces localStorage mutations.
+ * Field mapping: JS camelCase ↔ DB snake_case
  */
+import { supabase } from '../lib/supabase';
 import { generateSKU } from '../utils/skuGenerator';
 
+// ── Field Mappers ──────────────────────────────────────────────
+
+/** DB row (snake_case) → JS object (camelCase) */
+const fromDB = (row) => ({
+  id:            row.id,
+  sku:           row.sku,
+  name:          row.name,
+  description:   row.description ?? '',
+  category:      row.category,
+  imageUrl:      row.image_url ?? '',
+  unitPrice:     parseFloat(row.unit_price) ?? 0,
+  currentStock:  row.current_stock ?? 0,
+  reorderLevel:  row.reorder_level ?? 10,
+  unit:          row.unit ?? 'pcs',
+  supplier:      row.supplier ?? '',
+  location:      row.location ?? '',
+  isDeleted:     row.is_deleted ?? false,
+  createdAt:     row.created_at,
+  updatedAt:     row.updated_at,
+});
+
+/** JS object (camelCase) → DB row (snake_case) */
+const toDB = (data) => ({
+  sku:           data.sku,
+  name:          data.name?.trim(),
+  description:   data.description?.trim() ?? '',
+  category:      data.category?.trim(),
+  image_url:     data.imageUrl ?? '',
+  unit_price:    parseFloat(data.unitPrice) ?? 0,
+  current_stock: parseInt(data.currentStock) ?? 0,
+  reorder_level: parseInt(data.reorderLevel) ?? 10,
+  unit:          data.unit?.trim() ?? 'pcs',
+  supplier:      data.supplier?.trim() ?? '',
+  location:      data.location?.trim() ?? '',
+});
+
+// ── Service ────────────────────────────────────────────────────
+
 export const productService = {
-  /**
-   * Create a new product
-   */
-  createProduct: (data, existingProducts = []) => {
-    return {
-      sku: data.sku || generateSKU(existingProducts),
-      name: data.name.trim(),
-      description: data.description?.trim() || '',
-      category: data.category.trim(),
-      imageUrl: data.imageUrl || '',
-      unitPrice: parseFloat(data.unitPrice) || 0,
-      currentStock: parseInt(data.currentStock) || 0,
-      reorderLevel: parseInt(data.reorderLevel) || 10,
-      unit: data.unit?.trim() || 'pcs',
-      supplier: data.supplier?.trim() || '',
-      location: data.location?.trim() || '',
-    };
+
+  /** Fetch all non-deleted products */
+  getAllProducts: async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data.map(fromDB);
   },
 
-  /**
-   * Update an existing product
-   */
-  updateProduct: (id, data) => {
-    return {
-      id,
-      name: data.name.trim(),
-      description: data.description?.trim() || '',
-      category: data.category.trim(),
-      imageUrl: data.imageUrl || '',
-      unitPrice: parseFloat(data.unitPrice) || 0,
-      reorderLevel: parseInt(data.reorderLevel) || 10,
-      unit: data.unit?.trim() || 'pcs',
-      supplier: data.supplier?.trim() || '',
-      location: data.location?.trim() || '',
-      // Note: currentStock is NOT updated here — use Stock In/Out instead
-    };
+  /** Fetch single product by ID */
+  getProductById: async (id) => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) throw error;
+    return fromDB(data);
   },
 
-  /**
-   * Validate product data
-   */
+  /** Create a new product */
+  createProduct: async (formData, existingProducts = []) => {
+    const payload = toDB({
+      ...formData,
+      sku: formData.sku || generateSKU(existingProducts),
+    });
+
+    const { data, error } = await supabase
+      .from('products')
+      .insert([payload])
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Auto-register category
+    await supabase
+      .from('categories')
+      .upsert([{ name: formData.category.trim() }], { onConflict: 'name', ignoreDuplicates: true });
+
+    return fromDB(data);
+  },
+
+  /** Update an existing product (metadata only — stock via transactions) */
+  updateProduct: async (id, formData) => {
+    const payload = {
+      name:          formData.name?.trim(),
+      description:   formData.description?.trim() ?? '',
+      category:      formData.category?.trim(),
+      image_url:     formData.imageUrl ?? '',
+      unit_price:    parseFloat(formData.unitPrice) ?? 0,
+      reorder_level: parseInt(formData.reorderLevel) ?? 10,
+      unit:          formData.unit?.trim() ?? 'pcs',
+      supplier:      formData.supplier?.trim() ?? '',
+      location:      formData.location?.trim() ?? '',
+    };
+
+    const { data, error } = await supabase
+      .from('products')
+      .update(payload)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Keep category table in sync
+    await supabase
+      .from('categories')
+      .upsert([{ name: formData.category.trim() }], { onConflict: 'name', ignoreDuplicates: true });
+
+    return fromDB(data);
+  },
+
+  /** Soft-delete a product */
+  deleteProduct: async (id) => {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_deleted: true })
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  },
+
+  /** Restore a soft-deleted product */
+  restoreProduct: async (id) => {
+    const { error } = await supabase
+      .from('products')
+      .update({ is_deleted: false })
+      .eq('id', id);
+
+    if (error) throw error;
+    return { success: true };
+  },
+
+  // ── Validation (kept client-side — no DB round-trip needed) ──
+
   validateProduct: (data) => {
     const errors = {};
 
-    if (!data.name?.trim()) {
+    if (!data.name?.trim())
       errors.name = 'Product name is required';
-    }
 
-    if (!data.category?.trim()) {
+    if (!data.category?.trim())
       errors.category = 'Category is required';
-    }
 
-    if (!data.unitPrice || parseFloat(data.unitPrice) < 0) {
+    if (!data.unitPrice || parseFloat(data.unitPrice) < 0)
       errors.unitPrice = 'Unit price must be a positive number';
-    }
 
-    if (data.reorderLevel !== undefined && parseInt(data.reorderLevel) < 0) {
+    if (data.reorderLevel !== undefined && parseInt(data.reorderLevel) < 0)
       errors.reorderLevel = 'Reorder level cannot be negative';
-    }
 
-    if (data.currentStock !== undefined && parseInt(data.currentStock) < 0) {
+    if (data.currentStock !== undefined && parseInt(data.currentStock) < 0)
       errors.currentStock = 'Stock quantity cannot be negative';
-    }
 
-    return {
-      isValid: Object.keys(errors).length === 0,
-      errors,
-    };
+    return { isValid: Object.keys(errors).length === 0, errors };
   },
 
-  /**
-   * Search products by query
-   */
+  // ── Search / Filter helpers (kept client-side for speed) ─────
+
   searchProducts: (products, query) => {
     if (!query) return products;
     const q = query.toLowerCase();
@@ -90,30 +183,21 @@ export const productService = {
     );
   },
 
-  /**
-   * Filter products by category
-   */
   filterByCategory: (products, category) => {
     if (category === 'all') return products;
     return products.filter((p) => p.category === category);
   },
 
-  /**
-   * Filter products by stock status
-   */
   filterByStatus: (products, status) => {
     if (status === 'all') return products;
     return products.filter((p) => {
       if (status === 'out_of_stock') return p.currentStock === 0;
-      if (status === 'low_stock') return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
-      if (status === 'in_stock') return p.currentStock > p.reorderLevel;
+      if (status === 'low_stock')    return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
+      if (status === 'in_stock')     return p.currentStock > p.reorderLevel;
       return true;
     });
   },
 
-  /**
-   * Sort products
-   */
   sortProducts: (products, sortBy, sortOrder = 'asc') => {
     return [...products].sort((a, b) => {
       let aVal = a[sortBy];
