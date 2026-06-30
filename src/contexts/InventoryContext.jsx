@@ -1,45 +1,90 @@
 /**
  * InventoryContext.jsx
- * Global state provider — wraps the app and exposes state + dispatch.
- * Automatically persists to localStorage on every state change.
+ * Global state provider — now async-first with Supabase.
+ * Fetches data on mount, subscribes to Realtime changes, exposes derived selectors.
  */
-import { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
 import { inventoryReducer, initialState } from './inventoryReducer';
-import { loadState, saveState } from '../services/storageService';
+import { productService } from '../services/productService';
+import { stockService } from '../services/stockService';
+import { categoryService } from '../services/categoryService';
+import { supabase } from '../lib/supabase';
 
-// ── Context ─────────────────────────────────────────────────
+// ── Context ─────────────────────────────────────────────────────
 const InventoryContext = createContext(null);
 
-// ── Provider ─────────────────────────────────────────────────
+// ── Provider ─────────────────────────────────────────────────────
 export const InventoryProvider = ({ children }) => {
-  // Hydrate from localStorage on first render
-  const hydrated = useMemo(() => {
-    const saved = loadState();
-    if (saved) {
-      // Merge saved data into initial state shape (handles new keys gracefully)
-      return {
-        ...initialState,
-        products: saved.products ?? [],
-        transactions: saved.transactions ?? [],
-        categories: saved.categories ?? [],
-        // Don't restore UI/filter state — always start fresh
-      };
+  const [state, dispatch] = useReducer(inventoryReducer, initialState);
+
+  // ── Initial Data Fetch ──────────────────────────────────────
+
+  const fetchProducts = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: { products: true } });
+    try {
+      const products = await productService.getAllProducts();
+      dispatch({ type: 'SET_PRODUCTS', payload: products });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', payload: err.message });
     }
-    return initialState;
   }, []);
 
-  const [state, dispatch] = useReducer(inventoryReducer, hydrated);
+  const fetchTransactions = useCallback(async () => {
+    dispatch({ type: 'SET_LOADING', payload: { transactions: true } });
+    try {
+      const transactions = await stockService.getAllTransactions();
+      dispatch({ type: 'SET_TRANSACTIONS', payload: transactions });
+    } catch (err) {
+      dispatch({ type: 'SET_ERROR', payload: err.message });
+    }
+  }, []);
 
-  // Persist to localStorage whenever products/transactions/categories change
+  const fetchCategories = useCallback(async () => {
+    try {
+      const categories = await categoryService.getAll();
+      dispatch({ type: 'SET_CATEGORIES', payload: categories });
+    } catch (err) {
+      console.warn('[InventoryContext] Failed to fetch categories:', err.message);
+    }
+  }, []);
+
   useEffect(() => {
-    saveState({
-      products: state.products,
-      transactions: state.transactions,
-      categories: state.categories,
-    });
-  }, [state.products, state.transactions, state.categories]);
+    fetchProducts();
+    fetchTransactions();
+    fetchCategories();
+  }, [fetchProducts, fetchTransactions, fetchCategories]);
 
-  // ── Derived / computed selectors ───────────────────────────
+  // ── Realtime Subscriptions ──────────────────────────────────
+
+  useEffect(() => {
+    // Products channel — re-fetch on any change
+    const productsChannel = supabase
+      .channel('realtime-products')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'products' },
+        () => fetchProducts()
+      )
+      .subscribe();
+
+    // Transactions channel
+    const transactionsChannel = supabase
+      .channel('realtime-transactions')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'stock_transactions' },
+        () => fetchTransactions()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(transactionsChannel);
+    };
+  }, [fetchProducts, fetchTransactions]);
+
+  // ── Derived / Computed Selectors ────────────────────────────
+
   const activeProducts = useMemo(
     () => state.products.filter((p) => !p.isDeleted),
     [state.products]
@@ -75,15 +120,13 @@ export const InventoryProvider = ({ children }) => {
       );
     }
 
-    if (category !== 'all') {
-      result = result.filter((p) => p.category === category);
-    }
+    if (category !== 'all') result = result.filter((p) => p.category === category);
 
     if (status !== 'all') {
       result = result.filter((p) => {
         if (status === 'out_of_stock') return p.currentStock === 0;
-        if (status === 'low_stock') return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
-        if (status === 'in_stock') return p.currentStock > p.reorderLevel;
+        if (status === 'low_stock')    return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
+        if (status === 'in_stock')     return p.currentStock > p.reorderLevel;
         return true;
       });
     }
@@ -104,6 +147,10 @@ export const InventoryProvider = ({ children }) => {
   const value = {
     state,
     dispatch,
+    // Async re-fetch helpers
+    fetchProducts,
+    fetchTransactions,
+    fetchCategories,
     // Computed
     activeProducts,
     filteredProducts,
@@ -119,7 +166,7 @@ export const InventoryProvider = ({ children }) => {
   );
 };
 
-// ── Hook ─────────────────────────────────────────────────────
+// ── Hook ─────────────────────────────────────────────────────────
 export const useInventory = () => {
   const ctx = useContext(InventoryContext);
   if (!ctx) throw new Error('useInventory must be used within <InventoryProvider>');
