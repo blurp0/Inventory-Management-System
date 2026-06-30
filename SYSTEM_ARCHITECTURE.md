@@ -1,10 +1,10 @@
 # 📦 Inventory Management System — System Architecture
 
 > **Project:** StockFlow IMS  
-> **Version:** 1.2 — Phase 1 & Phase 1B Fully Complete  
-> **Stack:** React 19 + Vite + localStorage (Phase 1) → Supabase (Phase 2)  
+> **Version:** 2.0 — Phase 2 Supabase Migration Fully Complete  
+> **Stack:** React 19 + Vite + Supabase Cloud Backend (PostgreSQL, OAuth, RLS, Storage)  
 > **Last Updated:** 2026-06-30  
-> **Status:** ✅ Phase 1 Complete — Core Operations & Advanced Reports/Analytics Done  
+> **Status:** ✅ Phase 2 Complete — Cloud Backend, OAuth Auth, Storage, and Realtime Done  
 
 ---
 
@@ -339,13 +339,18 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
 *   ✅ Global Keyboard Shortcuts Hook
 *   ✅ UI/UX design refinements (spring actions, staggered entrance transitions)
 
-### Phase 2 — Cloud Backend Integration (NEXT STEP)
-*   [ ] **Supabase Initial Setup**: Project creation, schema definitions, and SQL triggers.
-*   [ ] **Database Migration**: Seed script migration importing localStorage mock records to Supabase tables.
-*   [ ] **Service Refactoring**: Update `productService.js` and `stockService.js` to execute calls via Supabase Client.
-*   [ ] **Authentication**: Implement OAuth + basic credentials using Supabase Auth.
-*   [ ] **Image Storage**: Configure Supabase Bucket Storage for base64 or file uploads.
-*   [ ] **Realtime Integration**: Subscribe client store to database changes for instant stock synchronizations.
+### Phase 2 — Cloud Backend Integration ✅ COMPLETE
+*   ✅ **Supabase Setup**: Project, database schemas, tables (`products`, `stock_transactions`, `categories`, `user_roles`), triggers, and Row Level Security (RLS) policies.
+*   ✅ **Service Refactoring**: Transitioned `productService.js`, `stockService.js`, and new `categoryService.js` to asynchronously query and mutate data directly via `supabase-js`.
+*   ✅ **Authentication (Email & OAuth)**: Integrated `AuthContext` guarding routes with Google Sign-In and Email-password sign-in mechanisms.
+*   ✅ **Supabase Storage**: Created `storageService.js` handling product image uploads, retrieves, and updates directly into Supabase Storage buckets.
+*   ✅ **Realtime Integration**: Subscribed context data models to Postgres Changes for automated local state updates on remote mutations.
+*   ✅ **UI/UX Polishing**: Refactored `ConfirmDialog` layouts, modal state timers, and implemented dynamic category caches and outside-click closeable notifications flyout.
+
+### Phase 3 — Future Extensions (Next Steps)
+*   [ ] **Product Image Upload UI**: Add file selection/preview controls to `ProductForm` component to hook into `storageService.uploadProductImage`.
+*   [ ] **Bulk Data Operations**: CSV import/export upload parsing directly to table seeds.
+*   [ ] **Multi-Warehouse Support**: Schema modifications adding warehouse node tracking.
 
 ---
 
