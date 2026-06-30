@@ -4,7 +4,7 @@
  * Field mapping: JS camelCase ↔ DB snake_case
  */
 import { supabase } from '../lib/supabase';
-import { generateSKU } from '../utils/skuGenerator';
+import { generateSKUFromDB } from '../utils/skuGenerator';
 
 // ── Field Mappers ──────────────────────────────────────────────
 
@@ -22,6 +22,7 @@ const fromDB = (row) => ({
   unit:          row.unit ?? 'pcs',
   supplier:      row.supplier ?? '',
   location:      row.location ?? '',
+  warehouseId:   row.warehouse_id ?? null,
   isDeleted:     row.is_deleted ?? false,
   createdAt:     row.created_at,
   updatedAt:     row.updated_at,
@@ -40,6 +41,7 @@ const toDB = (data) => ({
   unit:          data.unit?.trim() ?? 'pcs',
   supplier:      data.supplier?.trim() ?? '',
   location:      data.location?.trim() ?? '',
+  warehouse_id:  data.warehouseId ?? null,
 });
 
 // ── Service ────────────────────────────────────────────────────
@@ -71,11 +73,11 @@ export const productService = {
   },
 
   /** Create a new product */
-  createProduct: async (formData, existingProducts = []) => {
-    const payload = toDB({
-      ...formData,
-      sku: formData.sku || generateSKU(existingProducts),
-    });
+  createProduct: async (formData) => {
+    // Generate SKU from DB so soft-deleted SKUs are never recycled
+    const sku = formData.sku?.trim() || await generateSKUFromDB();
+
+    const payload = toDB({ ...formData, sku });
 
     const { data, error } = await supabase
       .from('products')
@@ -105,6 +107,7 @@ export const productService = {
       unit:          formData.unit?.trim() ?? 'pcs',
       supplier:      formData.supplier?.trim() ?? '',
       location:      formData.location?.trim() ?? '',
+      warehouse_id:  formData.warehouseId ?? null,
     };
 
     const { data, error } = await supabase

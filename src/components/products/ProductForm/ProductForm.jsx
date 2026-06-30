@@ -10,7 +10,7 @@ import { CategoryModal } from '../../common/CategoryModal/CategoryModal';
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../../hooks/useProducts';
 import { useInventory } from '../../../contexts/InventoryContext';
-import { categoryService, storageService, productService } from '../../../services';
+import { categoryService, storageService, productService, warehouseService } from '../../../services';
 import toast from 'react-hot-toast';
 import './ProductForm.css';
 
@@ -31,8 +31,10 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
     supplier: '',
     location: '',
     imageUrl: '',
+    warehouseId: '',
   });
 
+  const [warehouses, setWarehouses] = useState([]);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [imageDeleted, setImageDeleted] = useState(false);
@@ -46,6 +48,11 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
 
   useEffect(() => {
     if (!isOpen) return; // Only run when modal opens
+
+    // Fetch warehouses for the selector
+    warehouseService.getAll()
+      .then(setWarehouses)
+      .catch(() => setWarehouses([]));
     
     const initialData = {
       name: '',
@@ -59,6 +66,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
       supplier: '',
       location: '',
       imageUrl: '',
+      warehouseId: '',
     };
     
     if (isEditMode && productId) {
@@ -76,6 +84,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           supplier: product.supplier || '',
           location: product.location || '',
           imageUrl: product.imageUrl || '',
+          warehouseId: product.warehouseId || '',
         };
         setFormData(editData);
         setInitialFormData(editData);
@@ -207,6 +216,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           supplier: '',
           location: '',
           imageUrl: '',
+          warehouseId: '',
         });
         setImageFile(null);
         setImagePreview('');
@@ -223,6 +233,11 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
       setIsSubmitting(false);
     }
   };
+
+  const warehouseOptions = [
+    { value: '', label: 'No Warehouse Assigned' },
+    ...warehouses.map((wh) => ({ value: wh.id, label: wh.location ? `${wh.name} — ${wh.location}` : wh.name })),
+  ];
 
   const categoryOptions = [
     { value: '', label: 'Select Category' },
@@ -377,6 +392,14 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
             value={formData.location}
             onChange={handleChange}
             placeholder="e.g., Shelf A-3"
+          />
+
+          <Select
+            label="Warehouse"
+            name="warehouseId"
+            value={formData.warehouseId}
+            onChange={handleChange}
+            options={warehouseOptions}
           />
         </div>
 

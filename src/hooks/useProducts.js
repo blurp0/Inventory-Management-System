@@ -17,7 +17,7 @@ export const useProducts = () => {
     }
 
     try {
-      const product = await productService.createProduct(data, state.products);
+      const product = await productService.createProduct(data);
       // Optimistic cache update — Realtime will also trigger a re-fetch
       dispatch({ type: 'ADD_PRODUCT_CACHE', payload: product });
       if (product.category) {

@@ -84,6 +84,8 @@ export const AuthProvider = ({ children }) => {
   const canDeleteProducts = isAdmin;
   const canAdjustStock    = isAdmin || isManager;
   const canManageRoles    = isAdmin;
+  const canManageWarehouses = isAdmin;
+  const canBulkImport     = isAdmin;
 
   const value = {
     session,
@@ -96,6 +98,8 @@ export const AuthProvider = ({ children }) => {
     canDeleteProducts,
     canAdjustStock,
     canManageRoles,
+    canManageWarehouses,
+    canBulkImport,
     loading,
     signIn,
     signInWithGoogle,

@@ -17,6 +17,7 @@ import {
   Warehouse,
   Plus,
   Trash2,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -30,6 +31,7 @@ const TABS = [
   { id: 'preferences', label: 'Preferences',  icon: Settings2 },
   { id: 'security',    label: 'Security',     icon: Shield },
   { id: 'warehouses',  label: 'Warehouses',   icon: Warehouse, adminOnly: true },
+  { id: 'roles',       label: 'Role Management', icon: Users, adminOnly: true },
 ];
 
 export default function SettingsPage() {
@@ -54,10 +56,12 @@ export default function SettingsPage() {
   const [savingPrefs, setSavingPrefs]             = useState(false);
 
   // ── Warehouse state (admin only) ────────────────────────────
-  const [warehouses, setWarehouses]           = useState([]);
+  const [warehouses, setWarehouses]             = useState([]);
   const [warehousesLoaded, setWarehousesLoaded] = useState(false);
-  const [newWarehouse, setNewWarehouse]       = useState({ name: '', location: '', description: '' });
-  const [savingWarehouse, setSavingWarehouse] = useState(false);
+  const [newWarehouse, setNewWarehouse]         = useState({ name: '', location: '', description: '' });
+  const [savingWarehouse, setSavingWarehouse]   = useState(false);
+  const [editingWarehouse, setEditingWarehouse] = useState(null);
+  const [savingEdit, setSavingEdit]             = useState(false);
 
   const loadWarehouses = async () => {
     try {
@@ -88,9 +92,25 @@ export default function SettingsPage() {
     try {
       await warehouseService.delete(id);
       setWarehouses((prev) => prev.filter((w) => w.id !== id));
+      if (editingWarehouse?.id === id) setEditingWarehouse(null);
       toast.success(`Warehouse "${name}" deleted.`);
     } catch (err) {
       toast.error(err.message || 'Failed to delete warehouse.');
+    }
+  };
+
+  const handleSaveEditWarehouse = async () => {
+    if (!editingWarehouse.name.trim()) { toast.error('Warehouse name is required.'); return; }
+    setSavingEdit(true);
+    try {
+      const updated = await warehouseService.update(editingWarehouse.id, editingWarehouse);
+      setWarehouses((prev) => prev.map((w) => w.id === updated.id ? updated : w));
+      setEditingWarehouse(null);
+      toast.success(`Warehouse "${updated.name}" updated!`);
+    } catch (err) {
+      toast.error(err.message || 'Failed to update warehouse.');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -99,6 +119,61 @@ export default function SettingsPage() {
     setActiveTab(id);
     if (id === 'warehouses' && !warehousesLoaded) {
       loadWarehouses();
+    }
+    if (id === 'roles' && !roleUsersLoaded) {
+      loadRoleUsers();
+    }
+  };
+
+  // ── Role Management state (admin only) ─────────────────────
+  const [roleUsers, setRoleUsers]         = useState([]);
+  const [roleUsersLoaded, setRoleUsersLoaded] = useState(false);
+  const [updatingRole, setUpdatingRole]   = useState(null); // userId being updated
+
+  const ROLE_OPTIONS = ['admin', 'manager', 'viewer'];
+
+  const loadRoleUsers = async () => {
+    try {
+      // Fetch all users from auth via the admin view, then left-join with user_roles.
+      // This ensures users who signed up but have no user_roles row still appear.
+      const { data: authUsers, error: authError } = await supabase
+        .from('users_with_roles')
+        .select('user_id, email, role');
+
+      if (authError) {
+        // Fallback: query user_roles directly if the view doesn’t exist yet
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .order('role', { ascending: true });
+        if (error) throw error;
+        setRoleUsers(
+          (data ?? []).map((u) => ({ user_id: u.user_id, email: null, role: u.role }))
+        );
+      } else {
+        setRoleUsers(authUsers ?? []);
+      }
+      setRoleUsersLoaded(true);
+    } catch (err) {
+      toast.error('Failed to load user roles.');
+    }
+  };
+
+  const handleRoleChange = async (userId, newRole) => {
+    setUpdatingRole(userId);
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
+      if (error) throw error;
+      setRoleUsers((prev) =>
+        prev.map((u) => (u.user_id === userId ? { ...u, role: newRole } : u))
+      );
+      toast.success('Role updated successfully.');
+    } catch (err) {
+      toast.error(err.message || 'Failed to update role.');
+    } finally {
+      setUpdatingRole(null);
     }
   };
 
@@ -593,6 +668,120 @@ export default function SettingsPage() {
                       ))}
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Roles Tab (Admin Only) ────────────────────── */}
+          {activeTab === 'roles' && isAdmin && (
+            <div className="settings-card">
+              <div className="settings-card__header">
+                <Users size={20} />
+                <h2>Role Management</h2>
+              </div>
+
+              <div className="settings-prefs">
+                <div className="settings-pref-group">
+                  <h3>User Roles ({roleUsers.length})</h3>
+                  <p style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', margin: 0 }}>
+                    Assign roles to control what each user can see and do. Changes take effect on their next page load.
+                  </p>
+
+                  {!roleUsersLoaded ? (
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>Loading users...</p>
+                  ) : roleUsers.length === 0 ? (
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                      No users found in the user_roles table.
+                    </p>
+                  ) : (
+                    <div className="roles-table-wrapper">
+                      <table className="roles-table">
+                        <thead>
+                          <tr>
+                            <th>User ID</th>
+                            <th>Current Role</th>
+                            <th>Change Role</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {roleUsers.map((u) => (
+                            <tr key={u.user_id}>
+                              <td>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-primary)' }}>
+                                    {u.email ?? 'Unknown user'}
+                                    {u.user_id === user?.id && (
+                                      <span style={{ marginLeft: '6px', fontSize: 'var(--text-xs)', color: 'var(--color-accent)' }}>(you)</span>
+                                    )}
+                                  </span>
+                                  <code className="roles-uid">{u.user_id.slice(0, 16)}…</code>
+                                </div>
+                              </td>
+                              <td>
+                                <span className="settings-nav__role-badge" data-role={u.role}>
+                                  {u.role}
+                                </span>
+                              </td>
+                              <td>
+                                {u.user_id === user?.id ? (
+                                  <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                                    Cannot change your own role
+                                  </span>
+                                ) : (
+                                  <select
+                                    className="settings-input roles-role-select"
+                                    value={u.role}
+                                    disabled={updatingRole === u.user_id}
+                                    onChange={(e) => handleRoleChange(u.user_id, e.target.value)}
+                                  >
+                                    {ROLE_OPTIONS.map((r) => (
+                                      <option key={r} value={r}>{r}</option>
+                                    ))}
+                                  </select>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+                <div className="settings-pref-group">
+                  <h3>Access Matrix Reference</h3>
+                  <div className="roles-matrix">
+                    <table className="roles-table">
+                      <thead>
+                        <tr>
+                          <th>Capability</th>
+                          <th>Admin</th>
+                          <th>Manager</th>
+                          <th>Viewer</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          ['View Dashboard & Reports',         true,  true,  true],
+                          ['View Product Catalog & Ledger',    true,  true,  true],
+                          ['Perform Stock Adjustments',        true,  true,  false],
+                          ['Add / Edit Product Details',       true,  true,  false],
+                          ['Delete Products (Soft Delete)',    true,  false, false],
+                          ['Configure System Settings',        true,  false, false],
+                          ['Manage User Roles',                true,  false, false],
+                          ['Execute Bulk CSV Imports',         true,  false, false],
+                        ].map(([label, admin, manager, viewer]) => (
+                          <tr key={label}>
+                            <td>{label}</td>
+                            <td className={`roles-cell ${admin ? 'yes' : 'no'}`}>{admin ? '✅' : '❌'}</td>
+                            <td className={`roles-cell ${manager ? 'yes' : 'no'}`}>{manager ? '✅' : '❌'}</td>
+                            <td className={`roles-cell ${viewer ? 'yes' : 'no'}`}>{viewer ? '✅' : '❌'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
