@@ -162,6 +162,13 @@ export const inventoryReducer = (state, action) => {
     case 'RESET_FILTERS':
       return { ...state, filters: { ...initialState.filters } };
 
+    // ── Categories ─────────────────────────────────────────
+    case 'ADD_CATEGORY':
+      return {
+        ...state,
+        categories: [...state.categories, action.payload],
+      };
+
     // ── UI ─────────────────────────────────────────────────
     case 'OPEN_MODAL':
       return {
