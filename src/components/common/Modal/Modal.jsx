@@ -13,13 +13,15 @@ export const Modal = ({
   children,
   size = 'medium',
   showCloseButton = true,
+  preventClose = false,
+  onCloseAttempt,
 }) => {
   useEffect(() => {
     if (!isOpen) return;
 
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
 
@@ -32,10 +34,18 @@ export const Modal = ({
     };
   }, [isOpen]); // Only depend on isOpen
 
+  const handleClose = () => {
+    if (preventClose && onCloseAttempt) {
+      onCloseAttempt();
+    } else {
+      onClose();
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={handleClose}>
       <div
         className={`modal modal--${size}`}
         onClick={(e) => e.stopPropagation()}
@@ -45,7 +55,7 @@ export const Modal = ({
           {showCloseButton && (
             <button
               className="modal__close"
-              onClick={onClose}
+              onClick={handleClose}
               aria-label="Close modal"
               type="button"
             >
