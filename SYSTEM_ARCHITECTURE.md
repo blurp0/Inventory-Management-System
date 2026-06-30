@@ -1,7 +1,7 @@
 # 📦 Inventory Management System — System Architecture
 
 > **Project:** StockFlow IMS  
-> **Version:** 2.1 — Phase 3 Planned (User Settings & RBAC details added)  
+> **Version:** 2.3 — Phase 5 Blueprint Added (Advanced Scale & Integrations)  
 > **Stack:** React 19 + Vite + Supabase Cloud Backend (PostgreSQL, OAuth, RLS, Storage)  
 > **Last Updated:** 2026-06-30  
 > **Status:** ✅ Phase 2 Complete — Cloud Backend, OAuth Auth, Storage, and Realtime Done  
@@ -359,6 +359,19 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
     *   Enforce security tiers: `admin` (super-user), `manager` (read-write data access), and `viewer` (read-only monitoring).
     *   Apply UI gating and endpoint authorization checks restricting view permissions and mutations.
 
+### Phase 4 — Production Readiness & Security Hardening
+*   [ ] **Automated Reorder Alerts**: Supabase Edge Functions integrated with Resend/SendGrid/Twilio to trigger emails/SMS when items fall below reorder levels.
+*   [ ] **Comprehensive Audit Ledger**: Secure, immutable system logging for all mutations with before/after snapshots.
+*   [ ] **Database Optimizations**: Index strategy, connection pooling setup, and partition handling for scaling transaction histories.
+*   [ ] **Advanced Security Hardening**: Strict RLS audits, Multi-Factor Authentication (MFA), and rate-limiting rules.
+
+### Phase 5 — Advanced Automation, Integrations & Enterprise Scale
+*   [ ] **Integrations & Automated Workflows**: Sync inventory levels with third-party storefronts (Shopify, WooCommerce) and accounting software.
+*   [ ] **Barcode Scanner & PWA Mobile Capabilities**: Support camera barcode scanning natively via a mobile progressive web app.
+*   [ ] **Supplier & Purchase Order (PO) Management**: Link suppliers to products and automate PO generation.
+*   [ ] **Multi-Tenant SaaS Architecture**: Support multiple companies running isolated workspaces under Stripe subscriptions.
+*   [ ] **AI Demand Forecasting**: Integrate regression models to predict future inventory needs based on velocity history.
+
 ---
 
 ### 🛡️ Role-Based Access Control (RBAC) Specification
@@ -400,6 +413,58 @@ A new settings interface (`/settings`) will allow users to manage their credenti
 
 ---
 
+### 🚀 Phase 4 — Production Readiness, Backend & Security Blueprint
+
+To scale **StockFlow IMS** into a highly resilient, enterprise-grade application, the following blueprint will guide our production readiness phase:
+
+#### 1. Production Features
+*   **Intelligent Inventory Notifications**: Add a notification service using **Supabase Edge Functions** to listen to DB triggers (low stock) and send automated emails (via Resend) or push alerts to Slack/Teams webhooks.
+*   **Immutable System Audit Log**: Create an `audit_logs` table tracking every write/delete operation. Record user ID, action type, timestamp, IP, client agent, and a JSON-diff of the changes. This log will be accessible only to `admin` profiles via an Audit dashboard.
+*   **Predictive Stock Reordering**: Analytics widget displaying inventory velocity, average days-to-depletion, and auto-generated purchase orders when stock levels hit low thresholds.
+
+#### 2. Enterprise Backend Implementation
+*   **Query Performance Tuning**: Implement PostgreSQL indexes on columns like `products(sku)`, `products(name)`, `stock_transactions(product_id, created_at)` to support high-speed pagination and search.
+*   **Supabase Edge Functions Migration**: Move high-memory actions (like compiling massive PDF/CSV reports and parsing large bulk import sheets) from the client browser to server-side Edge Functions.
+*   **Database Scaling & Backups**: Configure automated point-in-time recovery (PITR) backups and setup connection pooling (PgBouncer) to handle concurrent traffic spikes smoothly.
+*   **Sentry & Monitoring Integration**: Add client-side error boundaries and connect performance-monitoring SDKs (like Sentry) to trace slow network calls and catch crashes in real-time.
+
+#### 3. Production Security & Hardening Measures
+*   **Zero-Trust Row Level Security (RLS)**:
+    *   Hard-restrict table operations. Ensure all queries reference the authenticated user context (`auth.uid()`) or associated organization/tenant ID.
+    *   Prevent anonymous public reads across all buckets and endpoints.
+*   **Multi-Factor Authentication (MFA)**: Toggle Supabase Auth's native TOTP-based MFA support, requiring administrators and managers to confirm logins via authenticator apps (e.g., Google Authenticator).
+*   **API Rate Limiting & Cloudflare integration**: Route traffic through Cloudflare for DDoS protection and enable rate-limiting policies on auth attempts and API queries to prevent brute-force attacks.
+*   **Secure Dependency Practices**: Integrate automated security scanning pipelines (`npm audit`, Dependabot, Snyk) to proactively discover and patch known vulnerabilities in our dependencies.
+
+---
+
+### 🌐 Phase 5 — Advanced Automation, Integrations & Enterprise Scale
+
+To position **StockFlow IMS** as a market-leading SaaS solution or a highly integrated internal system, Phase 5 will focus on connectivity, mobility, procurement workflows, and advanced intelligence:
+
+#### 1. E-Commerce & Third-Party Integrations
+*   **Realtime Storefront Sync**: Build bidirectional sync connectors with major platforms (Shopify, WooCommerce, Amazon Seller Central). When an order is placed on a storefront, trigger a webhook that executes a `STOCK_OUT` transaction in StockFlow IMS.
+*   **ERP & Accounting Sync**: Synchronize transaction ledgers with bookkeeping platforms (e.g., QuickBooks, Xero) to automatically sync cost of goods sold (COGS) and inventory valuation.
+
+#### 2. Mobility & Barcode Operations
+*   **PWA Setup & Camera Scanning**: Transform the application into a Progressive Web App (PWA) allowing warehouse staff to install it on mobile devices. Use browser-native barcode APIs (e.g., Shape Detection API or html5-qrcode) to scan barcodes/SKUs directly through the device camera for instant stock adjustments.
+*   **Hardware Scanner Support**: Allow listening to physical keyboard-wedge barcode scanners, enabling rapid, hands-free product lookup and transactions.
+
+#### 3. Procurement & Supplier Relations
+*   **Supplier Directory**: Build a catalog of vendors/suppliers, mapping them to products, lead times, and unit costs.
+*   **Automated Purchase Orders (POs)**: Enable operators to generate PDF purchase orders directly. When a PO is marked as "Approved", it enters a "Pending Delivery" state. Once the delivery arrives, scanning the PO auto-creates a bulk `STOCK_IN` transaction.
+
+#### 4. Multi-Tenant SaaS Architecture
+*   **Tenant Isolation**: Restructure the PostgreSQL schema to filter all tables by a `tenant_id` linked to an `organizations` table.
+*   **Stripe Subscription Billing**: Integrate Stripe Billing for tier-based subscription management (e.g., Starter, Pro, Enterprise) based on catalog size, transactions per month, or seat count.
+*   **Workspace Invites**: Allow organization administrators to invite team members via secure, tokenized emails.
+
+#### 5. Intelligent Forecasting
+*   **Demand Prediction Engine**: Apply moving-average and seasonal regression models to transaction history to predict stockout dates and recommend optimal purchase order quantities.
+*   **Smart Dashboard Recommendations**: Add proactive insights like "Dead Stock Alerts" (unsold products in 90 days) and "High Velocity Trends" (alerting admins to adjust stock levels ahead of seasonal spikes).
+
+---
+
 ## 12. Implementation Summary
 
 ### ✅ Technology Usage Audit
@@ -418,4 +483,4 @@ A new settings interface (`/settings`) will allow users to manage their credenti
 
 ---
 
-*StockFlow IMS — System Architecture v2.1 | Updated: 2026-06-30*
+*StockFlow IMS — System Architecture v2.3 | Updated: 2026-06-30*
