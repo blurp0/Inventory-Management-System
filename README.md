@@ -25,14 +25,15 @@
 - **Confirmation Dialogs** — Professional modal confirmations for actions
 - **Unsaved Changes Protection** — Warns before closing forms with unsaved data
 - **Status Badges** — Visual indicators for stock status (In Stock, Low Stock, Out of Stock)
+- **🖼️ Product Image Upload** — Upload and preview product images for products
+- **📁 Bulk CSV Import** — Import multiple products at once via CSV
 
-### ⏳ Coming Soon (Phase 1B)
+### ✅ Completed Reports & Analytics
 
 - **📈 Interactive Charts** — Stock value breakdown, category distribution using Recharts
-- **📋 Transaction History** — Complete audit trail page with filters
+- **📋 Transaction History** — Audit trail page with filters
 - **📄 Export Reports** — PDF and CSV export functionality
 - **⌨️ Keyboard Shortcuts** — Power-user shortcuts (N, /, Esc)
-- **Bulk CSV Import** — Import multiple products at once via CSV
 
 ---
 
@@ -52,9 +53,9 @@
 
 | Technology | Purpose |
 |------------|---------|
-| **Context API + useReducer** | Global state management (Phase 1) |
-| **localStorage** | Client-side data persistence (Phase 1) |
-| **Supabase** | Backend-as-a-Service with PostgreSQL (Phase 2) |
+| **Context API + useReducer** | Global state management across app and UI flows |
+| **localStorage** | Preference persistence only (theme, default page, low stock threshold) |
+| **Supabase** | Primary backend for products, transactions, categories, auth, and storage |
 
 ### Charts & Visualization
 
@@ -265,7 +266,7 @@ src/
 - Unsaved changes protection
 - Status badges and indicators
 
-#### ⏳ Reports & Analytics (Pending)
+#### ✅ Reports & Analytics (Complete)
 - Transaction History page
 - Reports & Analytics page
 - Interactive Charts (Recharts)
@@ -282,6 +283,8 @@ src/
 - Cloud image storage
 - Advanced analytics
 - Barcode scanning support
+
+> Phase 3 is currently postponed; the app includes some Phase 3 components such as image upload and CSV import, while full warehouse assignment and role management remain deferred.
 
 ---
 

@@ -342,7 +342,12 @@ npm install package-name@latest
 - Analytics: Advanced forecasting
 - Notifications: Email alerts
 - Mobile: Native app (React Native)
-
+### Phase 3 Status
+Phase 3 work is postponed until after Phase 2 backend integration and stability are confirmed. The items below show what is already implemented versus what is deferred.
+- **Deferred**: Multi-warehouse product binding and product form integration
+- **Deferred**: Full role administration UI and complete RBAC enforcement
+- **Implemented**: Product image upload, bulk CSV import, profile settings, preferences, and password management
+- **Implemented**: Warehouse CRUD in Settings is scaffolded for future product assignment
 ### Estimated Timeline: 2-3 weeks
 ### Estimated Effort: 120-160 hours
 

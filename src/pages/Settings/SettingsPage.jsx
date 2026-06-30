@@ -14,11 +14,14 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Warehouse,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { supabase } from '../../lib/supabase';
-import { storageService } from '../../services';
+import { warehouseService } from '../../services';
 import toast from 'react-hot-toast';
 import './SettingsPage.css';
 
@@ -26,6 +29,7 @@ const TABS = [
   { id: 'profile',     label: 'Profile',      icon: User },
   { id: 'preferences', label: 'Preferences',  icon: Settings2 },
   { id: 'security',    label: 'Security',     icon: Shield },
+  { id: 'warehouses',  label: 'Warehouses',   icon: Warehouse, adminOnly: true },
 ];
 
 export default function SettingsPage() {
@@ -48,6 +52,55 @@ export default function SettingsPage() {
     parseInt(localStorage.getItem('pref_low_stock_threshold') ?? '10', 10)
   );
   const [savingPrefs, setSavingPrefs]             = useState(false);
+
+  // ── Warehouse state (admin only) ────────────────────────────
+  const [warehouses, setWarehouses]           = useState([]);
+  const [warehousesLoaded, setWarehousesLoaded] = useState(false);
+  const [newWarehouse, setNewWarehouse]       = useState({ name: '', location: '', description: '' });
+  const [savingWarehouse, setSavingWarehouse] = useState(false);
+
+  const loadWarehouses = async () => {
+    try {
+      const data = await warehouseService.getAll();
+      setWarehouses(data);
+      setWarehousesLoaded(true);
+    } catch (err) {
+      toast.error('Failed to load warehouses.');
+    }
+  };
+
+  const handleAddWarehouse = async () => {
+    if (!newWarehouse.name.trim()) { toast.error('Warehouse name is required.'); return; }
+    setSavingWarehouse(true);
+    try {
+      const created = await warehouseService.create(newWarehouse);
+      setWarehouses((prev) => [...prev, created]);
+      setNewWarehouse({ name: '', location: '', description: '' });
+      toast.success(`Warehouse "${created.name}" added!`);
+    } catch (err) {
+      toast.error(err.message || 'Failed to add warehouse.');
+    } finally {
+      setSavingWarehouse(false);
+    }
+  };
+
+  const handleDeleteWarehouse = async (id, name) => {
+    try {
+      await warehouseService.delete(id);
+      setWarehouses((prev) => prev.filter((w) => w.id !== id));
+      toast.success(`Warehouse "${name}" deleted.`);
+    } catch (err) {
+      toast.error(err.message || 'Failed to delete warehouse.');
+    }
+  };
+
+  // Load warehouses when that tab opens
+  const handleTabChange = (id) => {
+    setActiveTab(id);
+    if (id === 'warehouses' && !warehousesLoaded) {
+      loadWarehouses();
+    }
+  };
 
   // ── Security state ──────────────────────────────────────────
   const [currentPwd, setCurrentPwd]   = useState('');
@@ -170,11 +223,11 @@ export default function SettingsPage() {
       <div className="settings-page__layout">
         {/* Sidebar Nav */}
         <nav className="settings-nav">
-          {TABS.map(({ id, label, icon: Icon }) => (
+          {TABS.filter(tab => !tab.adminOnly || isAdmin).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={`settings-nav__item${activeTab === id ? ' active' : ''}`}
-              onClick={() => setActiveTab(id)}
+              onClick={() => handleTabChange(id)}
             >
               <Icon size={18} />
               <span>{label}</span>
@@ -452,6 +505,94 @@ export default function SettingsPage() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Warehouses Tab (Admin Only) ───────────────────── */}
+          {activeTab === 'warehouses' && isAdmin && (
+            <div className="settings-card">
+              <div className="settings-card__header">
+                <Warehouse size={20} />
+                <h2>Warehouses</h2>
+              </div>
+
+              <div className="settings-prefs">
+                <div className="settings-pref-group">
+                  <h3>Add New Warehouse</h3>
+                  <div className="settings-form-row">
+                    <div className="settings-field">
+                      <label>Name *</label>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="e.g., Main Warehouse"
+                        value={newWarehouse.name}
+                        onChange={(e) => setNewWarehouse((p) => ({ ...p, name: e.target.value }))}
+                      />
+                    </div>
+                    <div className="settings-field">
+                      <label>Location</label>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="e.g., Building A, Floor 2"
+                        value={newWarehouse.location}
+                        onChange={(e) => setNewWarehouse((p) => ({ ...p, location: e.target.value }))}
+                      />
+                    </div>
+                    <div className="settings-field">
+                      <label>Description</label>
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="Optional notes"
+                        value={newWarehouse.description}
+                        onChange={(e) => setNewWarehouse((p) => ({ ...p, description: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div className="settings-card__actions">
+                    <button
+                      className="settings-btn settings-btn--primary"
+                      onClick={handleAddWarehouse}
+                      disabled={savingWarehouse}
+                    >
+                      {savingWarehouse ? 'Adding...' : <><Plus size={16} /> Add Warehouse</>}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="settings-pref-group">
+                  <h3>Existing Warehouses ({warehouses.length})</h3>
+                  {warehouses.length === 0 ? (
+                    <p style={{ color: 'var(--color-text-muted)', fontSize: 'var(--text-sm)' }}>
+                      No warehouses configured yet.
+                    </p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {warehouses.map((wh) => (
+                        <div key={wh.id} className="settings-provider-badge" style={{ justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+                            <Warehouse size={20} style={{ color: 'var(--color-accent)', flexShrink: 0 }} />
+                            <div>
+                              <strong>{wh.name}</strong>
+                              <p>{wh.location || 'No location specified'}</p>
+                            </div>
+                          </div>
+                          <button
+                            className="settings-btn"
+                            style={{ background: 'var(--color-danger-dim)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '6px 12px' }}
+                            onClick={() => handleDeleteWarehouse(wh.id, wh.name)}
+                            title="Delete warehouse"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

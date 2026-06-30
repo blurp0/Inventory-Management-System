@@ -65,10 +65,10 @@
 | 11 | **Stock Transaction History** | ✅ Done | Paginated history with multi-filter and stock delta flow modals |
 | 12 | **Product Categories & Filtering** | ✅ Done | Filter by category, status, and sort dynamically |
 | 13 | **Dashboard Overview Page** | ✅ Done | KPI cards (valuation, alerts, catalog counters) |
-| 14 | **Bulk Import (CSV Upload)** | ⏳ Pending | Slated for Phase 2 integration |
+| 14 | **Bulk Import (CSV Upload)** | ✅ Done | Implemented via `ImportModal` and product import flow |
 | 15 | **Barcode / SKU Generator** | ✅ Done | Auto-generate unique SKU codes on product addition |
 | 16 | **Dark / Light Mode Toggle** | ✅ Done | Persisted Context-based switcher |
-| 17 | **Product Image Upload** | ⏳ Pending | Slated for Phase 2 integration |
+| 17 | **Product Image Upload** | ✅ Done | Implemented in `ProductForm` with Supabase image storage |
 | 18 | **Keyboard Shortcuts** | ✅ Done | Shortcut `/` for search, `N` for new products, `Esc` to close modal |
 | 19 | **Activity Feed** | ✅ Done | Dashboard widget displaying last 5 audit entries |
 
@@ -92,7 +92,7 @@ CSV Export:           Native Blob Engine
 Icons:                Lucide React
 Date Handling:        Day.js (Lightweight date parsing & ranges)
 Notifications:        react-hot-toast
-Persistence:          localStorage (v1 schema) → Supabase (Phase 2 migration target)
+Persistence:          Supabase PostgreSQL + Storage for core data, with localStorage used only for theme and preferences
 Linting:              OXLint
 ```
 
@@ -347,17 +347,16 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
 *   ✅ **Realtime Integration**: Subscribed context data models to Postgres Changes for automated local state updates on remote mutations.
 *   ✅ **UI/UX Polishing**: Refactored `ConfirmDialog` layouts, modal state timers, and implemented dynamic category caches and outside-click closeable notifications flyout.
 
-### Phase 3 — Future Extensions (Next Steps)
-*   [ ] **Product Image Upload UI**: Add file selection/preview controls to `ProductForm` component to hook into `storageService.uploadProductImage`.
-*   [ ] **Bulk Data Operations**: CSV import/export upload parsing directly to table seeds.
-*   [ ] **Multi-Warehouse Support**: Schema modifications adding warehouse node tracking.
-*   [ ] **User Settings & Profile Management**:
-    *   **Profile Customization**: Change display name, edit email, and upload profile pictures to a Supabase storage bucket (`avatars`).
-    *   **Application Preferences**: Allow toggling custom defaults: default landing page, default currency formatting, notification thresholds, and persistent theme overrides.
-    *   **Account Settings**: Password reset flow and OAuth provider management.
-*   [ ] **Role-Based Access Control (RBAC)**:
-    *   Enforce security tiers: `admin` (super-user), `manager` (read-write data access), and `viewer` (read-only monitoring).
-    *   Apply UI gating and endpoint authorization checks restricting view permissions and mutations.
+### Phase 3 — Postponed with Partial Implementation
+Phase 3 is currently postponed to preserve focus on core Phase 2 backend stability. The repository already includes several Phase 3 feature components, while the remaining advanced extensions are deferred to a later release.
+
+*   ✅ **Product Image Upload UI**: Fully implemented in `src/components/products/ProductForm/ProductForm.jsx` with image preview, upload, and Supabase storage support.
+*   ✅ **Bulk Data Operations**: Implemented via `src/components/products/ImportModal/ImportModal.jsx` for bulk CSV product import.
+*   ⚠️ **Multi-Warehouse Support**: `warehouseService.js` and the Settings warehouse CRUD UI are implemented, but product-side warehouse assignment is not yet wired into the product form or product data model.
+*   ✅ **User Settings & Profile Management**: Profile editing, avatar upload, theme preference, default landing page, low stock threshold settings, and password change are implemented in `src/pages/Settings/SettingsPage.jsx`.
+*   ⚠️ **Role-Based Access Control (RBAC)**: Basic role lookup and view gating exist in `src/contexts/AuthContext.jsx` and `src/components/common/ProtectedRoute.jsx`, but full role management UI and comprehensive endpoint-level RBAC enforcement remain deferred.
+
+> Deferred Phase 3 deliverables are: product warehouse binding, richer role administration, OAuth provider linking, and expanded access-control policies.
 
 ### Phase 4 — Production Readiness & Security Hardening
 *   [ ] **Automated Reorder Alerts**: Supabase Edge Functions integrated with Resend/SendGrid/Twilio to trigger emails/SMS when items fall below reorder levels.
