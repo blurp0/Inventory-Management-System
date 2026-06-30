@@ -81,6 +81,19 @@
   transform: translateY(-1px);
 }
 
+.btn--warning {
+  background: #F59E0B;
+  color: white;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+  font-weight: 600;
+}
+
+.btn--warning:hover:not(:disabled) {
+  background: #D97706;
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.4);
+  transform: translateY(-1px);
+}
+
 .btn--ghost {
   background: transparent;
   color: #94A3B8;

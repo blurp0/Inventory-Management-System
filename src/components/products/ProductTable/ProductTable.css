@@ -76,6 +76,37 @@
 .product-actions {
   display: flex;
   gap: 4px;
+  align-items: center;
+}
+
+.product-actions .btn {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.product-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.product-actions .btn__icon {
+  color: #94A3B8;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.product-actions .btn:hover .btn__icon {
+  color: #F1F5F9;
 }
 
 .product-table-empty {

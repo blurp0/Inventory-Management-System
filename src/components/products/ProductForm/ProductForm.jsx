@@ -6,13 +6,15 @@ import { useState, useEffect } from 'react';
 import { Input, Textarea, Select } from '../../common/Input/Input';
 import { Button } from '../../common/Button/Button';
 import { Modal } from '../../common/Modal/Modal';
+import { CategoryModal } from '../../common/CategoryModal/CategoryModal';
+import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../../hooks/useProducts';
 import { useInventory } from '../../../contexts/InventoryContext';
 import './ProductForm.css';
 
 export const ProductForm = ({ isOpen, onClose, productId = null }) => {
   const { addProduct, updateProduct, getProductById } = useProducts();
-  const { state } = useInventory();
+  const { state, dispatch } = useInventory();
   const isEditMode = !!productId;
 
   const [formData, setFormData] = useState({
@@ -30,14 +32,31 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [initialFormData, setInitialFormData] = useState(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return; // Only run when modal opens
     
+    const initialData = {
+      name: '',
+      sku: '',
+      description: '',
+      category: '',
+      unitPrice: '',
+      currentStock: '0',
+      reorderLevel: '10',
+      unit: 'pcs',
+      supplier: '',
+      location: '',
+    };
+    
     if (isEditMode && productId) {
       const product = getProductById(productId);
       if (product) {
-        setFormData({
+        const editData = {
           name: product.name,
           sku: product.sku,
           description: product.description || '',
@@ -48,28 +67,27 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           unit: product.unit,
           supplier: product.supplier || '',
           location: product.location || '',
-        });
+        };
+        setFormData(editData);
+        setInitialFormData(editData);
       }
     } else {
-      setFormData({
-        name: '',
-        sku: '',
-        description: '',
-        category: '',
-        unitPrice: '',
-        currentStock: '0',
-        reorderLevel: '10',
-        unit: 'pcs',
-        supplier: '',
-        location: '',
-      });
+      setFormData(initialData);
+      setInitialFormData(initialData);
     }
     setErrors({});
+    setHasUnsavedChanges(false);
   }, [isOpen, productId]); // Removed getProductById and isEditMode from dependencies
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      // Check if form has changes
+      const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+      setHasUnsavedChanges(hasChanges);
+      return newData;
+    });
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: '' }));
     }
@@ -101,13 +119,39 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
   const handleCategoryChange = (e) => {
     const value = e.target.value;
     if (value === '__new__') {
-      const newCategory = prompt('Enter new category name:');
-      if (newCategory?.trim()) {
-        setFormData((prev) => ({ ...prev, category: newCategory.trim() }));
-      }
+      setIsCategoryModalOpen(true);
     } else {
-      setFormData((prev) => ({ ...prev, category: value }));
+      setFormData((prev) => {
+        const newData = { ...prev, category: value };
+        const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+        setHasUnsavedChanges(hasChanges);
+        return newData;
+      });
     }
+  };
+
+  const handleAddCategory = (categoryName) => {
+    dispatch({ type: 'ADD_CATEGORY', payload: categoryName });
+    setFormData((prev) => {
+      const newData = { ...prev, category: categoryName };
+      const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+      setHasUnsavedChanges(hasChanges);
+      return newData;
+    });
+  };
+
+  const handleCloseAttempt = () => {
+    if (hasUnsavedChanges) {
+      setShowConfirmDialog(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmClose = () => {
+    setHasUnsavedChanges(false);
+    setShowConfirmDialog(false);
+    onClose();
   };
 
   return (
@@ -116,6 +160,8 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
       onClose={onClose}
       title={isEditMode ? 'Edit Product' : 'Add New Product'}
       size="large"
+      preventClose={hasUnsavedChanges}
+      onCloseAttempt={handleCloseAttempt}
     >
       <form onSubmit={handleSubmit} className="product-form">
         <div className="product-form__grid">
@@ -223,7 +269,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           <Button
             type="button"
             variant="secondary"
-            onClick={onClose}
+            onClick={handleCloseAttempt}
             disabled={isSubmitting}
           >
             Cancel
@@ -237,6 +283,24 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           </Button>
         </div>
       </form>
+
+      <CategoryModal
+        isOpen={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        onAdd={handleAddCategory}
+        existingCategories={state.categories}
+      />
+
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmClose}
+        title="Unsaved Changes"
+        message="You have unsaved changes. Are you sure you want to close this form? All changes will be lost."
+        confirmText="Discard Changes"
+        cancelText="Keep Editing"
+        variant="warning"
+      />
     </Modal>
   );
 };

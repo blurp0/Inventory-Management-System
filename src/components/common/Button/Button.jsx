@@ -35,7 +35,7 @@ export const Button = ({
       {...props}
     >
       {icon && <span className="btn__icon">{icon}</span>}
-      <span className="btn__text">{children}</span>
+      {children && <span className="btn__text">{children}</span>}
       {loading && <span className="btn__spinner"></span>}
     </button>
   );
