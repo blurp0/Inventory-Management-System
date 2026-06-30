@@ -1,40 +1,47 @@
 /**
  * storageService.js
- * Abstraction layer over localStorage with schema versioning.
+ * Supabase Storage — product image upload/delete.
+ * Replaces the old localStorage version.
  */
+import { supabase } from '../lib/supabase';
 
-const STORAGE_KEY = 'stockflow_ims';
-const SCHEMA_VERSION = 1;
+const BUCKET = 'product-images';
 
-export const saveState = (state) => {
-  try {
-    const payload = JSON.stringify({ _version: SCHEMA_VERSION, ...state });
-    localStorage.setItem(STORAGE_KEY, payload);
-  } catch (err) {
-    console.warn('[StorageService] Failed to save state:', err);
-  }
-};
+export const storageService = {
 
-export const loadState = () => {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed._version !== SCHEMA_VERSION) {
-      console.warn('[StorageService] Schema version mismatch — resetting state.');
-      return null;
-    }
-    return parsed;
-  } catch (err) {
-    console.warn('[StorageService] Failed to load state:', err);
-    return null;
-  }
-};
+  /**
+   * Upload a product image file.
+   * Returns the public URL string.
+   */
+  uploadProductImage: async (file, productId) => {
+    // Sanitise filename: use productId + original extension
+    const ext = file.name.split('.').pop();
+    const path = `${productId}.${ext}`;
 
-export const clearState = () => {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch (err) {
-    console.warn('[StorageService] Failed to clear state:', err);
-  }
+    const { error: uploadError } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if (uploadError) throw uploadError;
+
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  },
+
+  /**
+   * Delete a product image from storage.
+   */
+  deleteProductImage: async (productId) => {
+    // Try both jpg and png extensions
+    const paths = [`${productId}.jpg`, `${productId}.png`, `${productId}.jpeg`, `${productId}.webp`];
+    await supabase.storage.from(BUCKET).remove(paths);
+  },
+
+  /**
+   * Get the public URL for a product image.
+   */
+  getPublicUrl: (path) => {
+    const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+    return data.publicUrl;
+  },
 };

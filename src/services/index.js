@@ -1,3 +1,4 @@
 export { productService } from './productService';
 export { stockService } from './stockService';
-export { saveState, loadState, clearState } from './storageService';
+export { categoryService } from './categoryService';
+export { storageService } from './storageService';
