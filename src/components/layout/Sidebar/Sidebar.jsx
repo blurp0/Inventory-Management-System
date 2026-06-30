@@ -10,9 +10,11 @@ import {
   Box,
   Sun,
   Moon,
+  Settings,
 } from 'lucide-react';
 import { useInventory } from '../../../contexts/InventoryContext';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import './Sidebar.css';
 
 const NAV_ITEMS = [
@@ -35,14 +37,23 @@ const NAV_ITEMS = [
       { to: '/reports', icon: BarChart3, label: 'Reports' },
     ],
   },
+  {
+    section: 'Account',
+    items: [
+      { to: '/settings', icon: Settings, label: 'Settings' },
+    ],
+  },
 ];
 
 export default function Sidebar() {
   const { state, dispatch, lowStockProducts, outOfStockProducts } = useInventory();
   const { theme, toggleTheme } = useTheme();
+  const { user, role } = useAuth();
   const isCollapsed = !state.ui.sidebarOpen;
 
   const alertCount = lowStockProducts.length + outOfStockProducts.length;
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
     <aside className={`sidebar${isCollapsed ? ' collapsed' : ''}`} aria-label="Main navigation">

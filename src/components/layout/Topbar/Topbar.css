@@ -100,6 +100,36 @@
   color: #fff;
   cursor: pointer;
   flex-shrink: 0;
+  position: relative;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.topbar__user-avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+
+.topbar__role-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--color-bg-base);
+  background: var(--color-success);
+}
+
+.topbar__role-dot[data-role="admin"] {
+  background: var(--color-primary);
+}
+
+.topbar__role-dot[data-role="manager"] {
+  background: var(--color-warning);
+}
+
+.topbar__role-dot[data-role="viewer"] {
+  background: var(--color-accent);
 }
 
 /* ── Notifications Dropdown Flyout (Facebook Style) ────────── */

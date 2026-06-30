@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Bell, Search, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bell, Search, AlertTriangle, AlertCircle, CheckCircle2, Settings } from 'lucide-react';
 import { useInventory } from '../../../contexts/InventoryContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { Badge } from '../../common/Badge/Badge';
 import './Topbar.css';
 
@@ -10,17 +11,22 @@ const PAGE_META = {
   '/products':     { title: 'Products',          breadcrumb: 'Home / Inventory / Products' },
   '/transactions': { title: 'Stock Movements',   breadcrumb: 'Home / Inventory / Transactions' },
   '/reports':      { title: 'Reports & Analytics', breadcrumb: 'Home / Analytics / Reports' },
+  '/settings':     { title: 'Settings',           breadcrumb: 'Home / Account / Settings' },
 };
 
 export default function Topbar() {
   const { state, lowStockProducts, outOfStockProducts } = useInventory();
+  const { user, role } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const isCollapsed = !state.ui.sidebarOpen;
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const containerRef = useRef(null);
 
   const meta = PAGE_META[location.pathname] ?? { title: 'StockFlow IMS', breadcrumb: 'Home' };
   const hasAlerts = lowStockProducts.length + outOfStockProducts.length > 0;
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
 
   // Handle closing the notifications dropdown when clicking outside
   useEffect(() => {
@@ -115,10 +121,13 @@ export default function Topbar() {
           className="topbar__user-avatar"
           role="button"
           tabIndex={0}
-          aria-label="User profile"
-          title="Admin"
+          aria-label="User settings"
+          title={`${displayName} — ${role ?? 'viewer'} · Click to open Settings`}
+          onClick={() => navigate('/settings')}
+          onKeyDown={(e) => e.key === 'Enter' && navigate('/settings')}
         >
-          A
+          {initials}
+          <span className="topbar__role-dot" data-role={role} aria-hidden="true" />
         </div>
       </div>
     </header>

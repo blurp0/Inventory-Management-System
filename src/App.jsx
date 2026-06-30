@@ -10,6 +10,7 @@ import DashboardPage  from './pages/Dashboard/DashboardPage';
 import ProductsPage   from './pages/Products/ProductsPage';
 import TransactionsPage from './pages/Transactions/TransactionsPage';
 import ReportsPage    from './pages/Reports/ReportsPage';
+import SettingsPage   from './pages/Settings/SettingsPage';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
                 <Route path="/products"     element={<ProductsPage />} />
                 <Route path="/transactions" element={<TransactionsPage />} />
                 <Route path="/reports"      element={<ReportsPage />} />
+                <Route path="/settings"     element={<SettingsPage />} />
                 <Route path="*"             element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>
