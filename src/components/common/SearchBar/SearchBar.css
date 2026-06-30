@@ -1,3 +1,7 @@
+/* ============================================================
+   SearchBar.css — Token-driven search input
+   ============================================================ */
+
 .search-bar {
   position: relative;
   display: flex;
@@ -6,46 +10,88 @@
 
 .search-bar__icon {
   position: absolute;
-  left: 12px;
-  color: var(--color-text-secondary);
+  left: var(--space-3);
+  color: var(--color-text-muted);
   pointer-events: none;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
 }
 
 .search-bar__input {
   width: 100%;
-  padding: 10px 40px 10px 40px;
-  font-family: inherit;
-  font-size: 15px;
+  padding: 0.5625rem var(--space-10) 0.5625rem 2.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
   color: var(--color-text-primary);
-  background: var(--color-surface);
+  background: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.search-bar__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.search-bar__input:hover:not(:focus) {
+  border-color: var(--color-border-hover);
 }
 
 .search-bar__input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: var(--color-bg-elevated);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
 }
 
+.search-bar__input:focus ~ .search-bar__icon {
+  color: var(--color-primary);
+}
+
+/* Shortcut hint badge */
+.search-bar__hint {
+  position: absolute;
+  right: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.search-bar__hint kbd {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+/* Clear button — replaces hint when there's a value */
 .search-bar__clear {
   position: absolute;
-  right: 8px;
+  right: var(--space-2);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   background: transparent;
-  border: none;
-  border-radius: 4px;
-  color: var(--color-text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-fast);
 }
 
 .search-bar__clear:hover {
-  background: var(--color-surface-hover);
+  background: var(--color-bg-hover);
+  border-color: var(--color-border);
   color: var(--color-text-primary);
 }
