@@ -1,6 +1,6 @@
 /**
  * useStock.js
- * Custom hook for stock transaction operations
+ * Async stock transaction hook — wraps stockService Supabase calls.
  */
 import { useInventory } from '../contexts/InventoryContext';
 import { stockService } from '../services/stockService';
@@ -9,7 +9,7 @@ import toast from 'react-hot-toast';
 export const useStock = () => {
   const { state, dispatch } = useInventory();
 
-  const stockIn = (productId, quantity, reason, performedBy = 'Admin') => {
+  const stockIn = async (productId, quantity, reason, performedBy = 'Admin') => {
     const product = state.products.find((p) => p.id === productId);
     if (!product) {
       toast.error('Product not found');
@@ -22,13 +22,27 @@ export const useStock = () => {
       return { success: false, errors: validation.errors };
     }
 
-    const data = stockService.createStockInData(productId, quantity, reason, performedBy);
-    dispatch({ type: 'STOCK_IN', payload: data });
-    toast.success(`Added ${quantity} units to "${product.name}"`);
-    return { success: true };
+    try {
+      const { transaction, newStock } = await stockService.createStockIn(
+        productId, product.currentStock, quantity, reason, performedBy
+      );
+
+      // Optimistic update cache
+      dispatch({
+        type: 'UPDATE_PRODUCT_CACHE',
+        payload: { id: productId, currentStock: newStock },
+      });
+      dispatch({ type: 'ADD_TRANSACTION_CACHE', payload: transaction });
+
+      toast.success(`Added ${quantity} units to "${product.name}"`);
+      return { success: true, transaction };
+    } catch (err) {
+      toast.error(`Stock In failed: ${err.message}`);
+      return { success: false, error: err.message };
+    }
   };
 
-  const stockOut = (productId, quantity, reason, performedBy = 'Admin') => {
+  const stockOut = async (productId, quantity, reason, performedBy = 'Admin') => {
     const product = state.products.find((p) => p.id === productId);
     if (!product) {
       toast.error('Product not found');
@@ -41,22 +55,36 @@ export const useStock = () => {
       return { success: false, errors: validation.errors };
     }
 
-    const data = stockService.createStockOutData(productId, quantity, reason, performedBy);
-    dispatch({ type: 'STOCK_OUT', payload: data });
-    toast.success(`Removed ${quantity} units from "${product.name}"`);
-    return { success: true };
+    try {
+      const { transaction, newStock } = await stockService.createStockOut(
+        productId, product.currentStock, quantity, reason, performedBy
+      );
+
+      dispatch({
+        type: 'UPDATE_PRODUCT_CACHE',
+        payload: { id: productId, currentStock: newStock },
+      });
+      dispatch({ type: 'ADD_TRANSACTION_CACHE', payload: transaction });
+
+      toast.success(`Removed ${quantity} units from "${product.name}"`);
+      return { success: true, transaction };
+    } catch (err) {
+      toast.error(`Stock Out failed: ${err.message}`);
+      return { success: false, error: err.message };
+    }
   };
 
-  const getProductTransactions = (productId) => {
-    return stockService.getProductTransactions(state.transactions, productId);
-  };
+  const getProductTransactions = (productId) =>
+    stockService.getProductTransactions
+      ? state.transactions.filter((t) => t.productId === productId)
+      : [];
 
-  const getRecentTransactions = (limit = 10) => {
-    return stockService.getRecentTransactions(state.transactions, limit);
-  };
+  const getRecentTransactions = (limit = 10) =>
+    stockService.getRecentTransactions(state.transactions, limit);
 
   return {
     transactions: state.transactions,
+    loading: state.loading.transactions,
     stockIn,
     stockOut,
     getProductTransactions,
