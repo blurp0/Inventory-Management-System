@@ -76,9 +76,32 @@ export const AuthProvider = ({ children }) => {
     setRole(null);
   };
 
-  const isAdmin = role === 'admin';
+  const isAdmin           = role === 'admin';
+  const isManager         = role === 'manager';
+  const isViewer          = role === 'viewer' || (!isAdmin && !isManager && role !== null);
 
-  const value = { session, user, role, isAdmin, loading, signIn, signInWithGoogle, signUp, signOut };
+  const canEditProducts   = isAdmin || isManager;
+  const canDeleteProducts = isAdmin;
+  const canAdjustStock    = isAdmin || isManager;
+  const canManageRoles    = isAdmin;
+
+  const value = {
+    session,
+    user,
+    role,
+    isAdmin,
+    isManager,
+    isViewer,
+    canEditProducts,
+    canDeleteProducts,
+    canAdjustStock,
+    canManageRoles,
+    loading,
+    signIn,
+    signInWithGoogle,
+    signUp,
+    signOut,
+  };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
