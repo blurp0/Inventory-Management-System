@@ -1,7 +1,7 @@
 # 📦 Inventory Management System — System Architecture
 
 > **Project:** StockFlow IMS  
-> **Version:** 2.0 — Phase 2 Supabase Migration Fully Complete  
+> **Version:** 2.1 — Phase 3 Planned (User Settings & RBAC details added)  
 > **Stack:** React 19 + Vite + Supabase Cloud Backend (PostgreSQL, OAuth, RLS, Storage)  
 > **Last Updated:** 2026-06-30  
 > **Status:** ✅ Phase 2 Complete — Cloud Backend, OAuth Auth, Storage, and Realtime Done  
@@ -351,6 +351,52 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
 *   [ ] **Product Image Upload UI**: Add file selection/preview controls to `ProductForm` component to hook into `storageService.uploadProductImage`.
 *   [ ] **Bulk Data Operations**: CSV import/export upload parsing directly to table seeds.
 *   [ ] **Multi-Warehouse Support**: Schema modifications adding warehouse node tracking.
+*   [ ] **User Settings & Profile Management**:
+    *   **Profile Customization**: Change display name, edit email, and upload profile pictures to a Supabase storage bucket (`avatars`).
+    *   **Application Preferences**: Allow toggling custom defaults: default landing page, default currency formatting, notification thresholds, and persistent theme overrides.
+    *   **Account Settings**: Password reset flow and OAuth provider management.
+*   [ ] **Role-Based Access Control (RBAC)**:
+    *   Enforce security tiers: `admin` (super-user), `manager` (read-write data access), and `viewer` (read-only monitoring).
+    *   Apply UI gating and endpoint authorization checks restricting view permissions and mutations.
+
+---
+
+### 🛡️ Role-Based Access Control (RBAC) Specification
+
+To enforce security and compartmentalize operations, we define three primary user tiers. The system leverages Supabase Row Level Security (RLS) policies based on the `user_roles` lookup table and UI route/button guards to restrict actions:
+
+| Action / Capability | Admin (`admin`) | Manager (`manager`) | Viewer (`viewer`) |
+| :--- | :---: | :---: | :---: |
+| **View Dashboard & Reports** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **View Product Catalog & Ledger** | ✅ Yes | ✅ Yes | ✅ Yes |
+| **Perform Stock Adjustments (In/Out)** | ✅ Yes | ✅ Yes | ❌ No |
+| **Add / Edit Product Details** | ✅ Yes | ✅ Yes | ❌ No |
+| **Delete Products (Soft Delete)** | ✅ Yes | ❌ No | ❌ No |
+| **Configure System-wide Settings** | ✅ Yes | ❌ No | ❌ No |
+| **Manage User Roles & Permissions** | ✅ Yes | ❌ No | ❌ No |
+| **Execute Bulk Data Imports (CSV)** | ✅ Yes | ❌ No | ❌ No |
+
+#### 🔑 Access Matrix Highlights
+1. **Admin (Super-User)**: Complete administrative control. Only admins can assign or modify roles, edit system configurations (like system-wide currency or reorder defaults), perform soft-deletes of products, or run bulk CSV updates.
+2. **Manager (Operator)**: Authorized to update stock levels (perform Stock In/Stock Out adjustments) and add or edit products in the catalog. They have full access to reports and ledgers but cannot delete any catalog history or manage other users.
+3. **Viewer (Auditor)**: Strictly read-only access. Useful for clients, external auditors, or warehouse observers. All action buttons (e.g. "Stock In", "Stock Out", "Add Product", "Delete") are hidden or disabled in the UI, and RLS policies block any database mutations.
+
+---
+
+### ⚙️ User Settings Page Specification
+
+A new settings interface (`/settings`) will allow users to manage their credentials, preferences, and personal details:
+
+1. **User Profile**:
+   - **Avatar Upload**: Support for uploading personal profile photos, saved in Supabase `avatars` bucket and linked via the user metadata.
+   - **Personal Info**: Fields to update full name and primary email.
+2. **System Preferences**:
+   - **Theme Selector**: Force light/dark mode or sync with system settings (persisted to profile).
+   - **Alert Settings**: Define custom reorder level multipliers or default stock alert thresholds.
+   - **Default Landing Page**: Choose whether to open at `/dashboard` or `/products` upon logging in.
+3. **Security & Integration**:
+   - **Password Change**: Standard form with password strength validation.
+   - **OAuth Connections**: Link or unlink external identity providers (Google OAuth, etc.).
 
 ---
 
@@ -372,4 +418,4 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
 
 ---
 
-*StockFlow IMS — System Architecture v1.2 | Updated: 2026-06-30*
+*StockFlow IMS — System Architecture v2.1 | Updated: 2026-06-30*
