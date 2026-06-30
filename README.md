@@ -10,28 +10,29 @@
 
 ## ✨ Features
 
-### Core Functionality
+### ✅ Implemented (Phase 1 Complete)
 
 - **📝 Product Management** — Add, edit, and delete products with comprehensive details (SKU, name, category, price, description)
-- **🔍 Smart Search & Filter** — Real-time search by name, SKU, or category with advanced filtering and sorting
-- **📦 Stock Operations** — Track stock in/out transactions with reason logging and automatic quantity updates
-- **📊 Analytics Dashboard** — Visual KPI cards showing total products, stock value, low stock alerts, and transaction history
-- **⚠️ Low Stock Alerts** — Automatic alerts for products below reorder level threshold
-- **📈 Interactive Charts** — Stock value breakdown, category distribution, and movement trends using Recharts
-- **📋 Transaction History** — Complete audit trail of all stock movements with timestamps and reasons
-- **📄 Export Reports** — Generate professional PDF reports and CSV exports for external analysis
+- **🔍 Smart Search & Filter** — Real-time search by name, SKU, or category with filtering and sorting
+- **📦 Stock Operations** — Track stock in/out transactions with reason logging and validation
+- **📊 Analytics Dashboard** — KPI cards showing total products, stock value, low stock alerts, and transactions
+- **⚠️ Low Stock Alerts** — Visual alerts for products below reorder level threshold in Dashboard
+- **📋 Recent Activity** — Shows last 5 transactions in Dashboard
 - **🌓 Dark/Light Mode** — Premium theme toggle with persistent user preference
-- **⌨️ Keyboard Shortcuts** — Power-user shortcuts for quick navigation and actions
 - **📱 Responsive Design** — Desktop-first, fully responsive to tablets and mobile devices
-
-### Smart Features
-
 - **Auto-SKU Generation** — Automatically generate unique SKU codes for new products
-- **Soft Delete with Undo** — Toast-based undo for accidental deletions within 5-second window
-- **Product Image Support** — Attach images to products (Base64 in Phase 1, cloud storage in Phase 2)
-- **Bulk CSV Import** — Import multiple products at once via CSV template
-- **Recent Activity Feed** — Track last 10 actions taken in the system
+- **Category Management** — Create and manage product categories dynamically
+- **Confirmation Dialogs** — Professional modal confirmations for actions
+- **Unsaved Changes Protection** — Warns before closing forms with unsaved data
 - **Status Badges** — Visual indicators for stock status (In Stock, Low Stock, Out of Stock)
+
+### ⏳ Coming Soon (Phase 1B)
+
+- **📈 Interactive Charts** — Stock value breakdown, category distribution using Recharts
+- **📋 Transaction History** — Complete audit trail page with filters
+- **📄 Export Reports** — PDF and CSV export functionality
+- **⌨️ Keyboard Shortcuts** — Power-user shortcuts (N, /, Esc)
+- **Bulk CSV Import** — Import multiple products at once via CSV
 
 ---
 
@@ -249,28 +250,37 @@ src/
 
 ## 🗺️ Roadmap
 
-### Phase 1 — MVP (Current) ✅ COMPLETED
+### Phase 1 — MVP
 
-- ✅ Project setup with React 19 + Vite
-- ✅ Core CRUD operations for products
-- ✅ Stock In/Out transaction management
-- ✅ Dashboard with KPI cards and charts
-- ✅ Search, filter, and sort functionality
-- ✅ PDF & CSV export
-- ✅ Dark/Light mode toggle
-- ✅ Mobile responsive design
-- ✅ Category management system
-- ✅ Confirmation dialogs
-- ✅ Unsaved changes protection
+#### ✅ Core Features (Complete)
+- Project setup with React 19 + Vite
+- Product CRUD operations
+- Stock In/Out transaction management
+- Dashboard with KPI cards
+- Search, filter, and sort functionality
+- Dark/Light mode toggle
+- Mobile responsive design
+- Category management system
+- Confirmation dialogs
+- Unsaved changes protection
+- Status badges and indicators
+
+#### ⏳ Reports & Analytics (Pending)
+- Transaction History page
+- Reports & Analytics page
+- Interactive Charts (Recharts)
+- PDF Export
+- CSV Export
+- Keyboard Shortcuts
 
 ### Phase 2 — Backend Integration (Future)
 
 - Supabase PostgreSQL database
-- User authentication (email/password)
-- Multi-user support with role-based access
+- User authentication
+- Multi-user support
 - Real-time stock updates
 - Cloud image storage
-- Advanced analytics and forecasting
+- Advanced analytics
 - Barcode scanning support
 
 ---

@@ -4,7 +4,7 @@
 > **Version:** 1.0 - Phase 1 Complete  
 > **Stack:** React 19 + Vite + localStorage (Phase 1) → Supabase (Phase 2)  
 > **Last Updated:** 2025-01-20  
-> **Status:** ✅ Phase 1 MVP Completed
+> **Status:** ⚠️ Phase 1 Partial - Core Features Done, Reports Pending
 
 ---
 
@@ -43,19 +43,35 @@
 
 ## 2. Feature Specification
 
-### ✅ Core Features (User-Requested)
+### ✅ Core Features - Implementation Status
 
-| # | Feature | Description | Priority |
-|---|---------|-------------|----------|
-| 1 | **Add New Product** | Create product with name, SKU, category, description, unit price, reorder level, and initial stock quantity | 🔴 Critical |
-| 2 | **View All Products** | Paginated, sortable product list with thumbnail, status badges, and stock levels | 🔴 Critical |
-| 3 | **Search Products** | Live search by name, SKU, or category with debounced input | 🔴 Critical |
-| 4 | **Stock In** | Increase stock quantity with a logged reason (e.g., "Purchase Order #001") | 🔴 Critical |
-| 5 | **Stock Out** | Decrease stock quantity with a logged reason (e.g., "Sale", "Damaged") | 🔴 Critical |
-| 6 | **Edit Product** | Modify product metadata (name, description, price, category, reorder level) | 🔴 Critical |
-| 7 | **Delete Product** | Soft-delete with confirmation modal and optional restore within session | 🟠 High |
-| 8 | **Inventory Report** | Statistical dashboard with charts: total SKUs, stock value, low stock alerts, top/bottom movers | 🔴 Critical |
-| 9 | **Export Report** | Export data as PDF (professional layout) and CSV (raw data) | 🟠 High |
+| # | Feature | Description | Priority | Status |
+|---|---------|-------------|----------|--------|
+| 1 | **Add New Product** | Create product with name, SKU, category, description, unit price, reorder level, and initial stock quantity | 🔴 Critical | ✅ Done |
+| 2 | **View All Products** | Paginated, sortable product list with thumbnail, status badges, and stock levels | 🔴 Critical | ✅ Done |
+| 3 | **Search Products** | Live search by name, SKU, or category with debounced input | 🔴 Critical | ✅ Done |
+| 4 | **Stock In** | Increase stock quantity with a logged reason (e.g., "Purchase Order #001") | 🔴 Critical | ✅ Done |
+| 5 | **Stock Out** | Decrease stock quantity with a logged reason (e.g., "Sale", "Damaged") | 🔴 Critical | ✅ Done |
+| 6 | **Edit Product** | Modify product metadata (name, description, price, category, reorder level) | 🔴 Critical | ✅ Done |
+| 7 | **Delete Product** | Soft-delete with confirmation dialog | 🟠 High | ✅ Done |
+| 8 | **Inventory Dashboard** | Statistical dashboard with KPI cards, recent activity, low stock alerts | 🔴 Critical | ✅ Done |
+| 9 | **Export Report** | Export data as PDF and CSV | 🟠 High | ⏳ Pending |
+
+### 💡 Suggested Additional Features - Status
+
+| # | Feature | Status | Notes |
+|---|---------|--------|-------|
+| 10 | **Low Stock Alerts** | ✅ Done | In Dashboard |
+| 11 | **Stock Transaction History** | ⏳ Pending | Page is placeholder |
+| 12 | **Product Categories & Filtering** | ✅ Done | Category filter + status filter |
+| 13 | **Dashboard Overview Page** | ✅ Done | KPI cards + activity |
+| 14 | **Bulk Import (CSV Upload)** | ⏳ Pending | Phase 2 |
+| 15 | **Barcode / SKU Generator** | ✅ Done | Auto-generate on add |
+| 16 | **Dark / Light Mode Toggle** | ✅ Done | Persisted to localStorage |
+| 17 | **Product Image Upload** | ⏳ Pending | Phase 2 |
+| 18 | **Undo Delete** | ⏳ Removed | Using confirm dialog instead |
+| 19 | **Keyboard Shortcuts** | ⏳ Pending | Not implemented |
+| 20 | **Activity Feed** | ✅ Done | Dashboard shows last 5 |
 
 ---
 
@@ -189,66 +205,64 @@ User Action (e.g., "Stock In")
 src/
 ├── assets/                    # Static images, logos
 ├── components/
-│   ├── common/                # Reusable UI atoms
-│   │   ├── Button/
-│   │   ├── Input/
-│   │   ├── Modal/
-│   │   ├── Badge/
-│   │   ├── Table/
-│   │   ├── Toast/
-│   │   ├── SearchBar/
-│   │   └── EmptyState/
-│   ├── layout/                # App shell
-│   │   ├── Sidebar/
-│   │   ├── Topbar/
-│   │   └── PageWrapper/
-│   ├── products/              # Product-specific components
-│   │   ├── ProductCard/
-│   │   ├── ProductTable/
-│   │   ├── ProductForm/       # Add & Edit
-│   │   └── ProductFilters/
-│   ├── stock/                 # Stock transaction components
-│   │   ├── StockInModal/
-│   │   ├── StockOutModal/
-│   │   └── TransactionHistory/
-│   └── reports/               # Charts & report components
-│       ├── KPICard/
-│       ├── StockValueChart/
-│       ├── CategoryBreakdown/
-│       ├── LowStockAlert/
-│       └── RecentActivity/
+│   ├── common/                # ✅ Reusable UI atoms
+│   │   ├── Badge/             # ✅ Status indicators
+│   │   ├── Button/            # ✅ 6 variants, 3 sizes
+│   │   ├── Input/             # ✅ Input, Textarea, Select
+│   │   ├── Modal/             # ✅ Overlay, keyboard, preventClose
+│   │   ├── SearchBar/         # ✅ Debounced search (300ms)
+│   │   ├── CategoryModal/     # ✅ Dynamic category creation
+│   │   ├── ConfirmDialog/     # ✅ Confirmation dialogs
+│   │   └── index.js           # ✅ Central export
+│   ├── layout/                # ✅ App shell
+│   │   ├── Sidebar/           # ✅ Navigation
+│   │   ├── Topbar/            # ✅ Header + theme toggle
+│   │   ├── PageWrapper/       # ✅ Content wrapper
+│   │   └── AppLayout.jsx      # ✅ Main layout
+│   ├── products/              # ✅ Product components
+│   │   ├── ProductForm/       # ✅ Add/Edit with validation
+│   │   └── ProductTable/      # ✅ Table with actions
+│   └── stock/                 # ✅ Stock transactions
+│       └── StockModal/        # ✅ Stock In/Out
 ├── contexts/
-│   ├── InventoryContext.jsx   # Products + transactions global state
-│   └── ThemeContext.jsx       # Dark/light mode
+│   ├── InventoryContext.jsx   # ✅ Global state provider
+│   ├── inventoryReducer.js    # ✅ 12 actions
+│   └── ThemeContext.jsx       # ✅ Dark/light mode
 ├── hooks/
-│   ├── useProducts.js
-│   ├── useStock.js
-│   ├── useSearch.js           # Debounced search
-│   ├── useFilter.js
-│   └── useExport.js
+│   ├── useProducts.js         # ✅ Product CRUD operations
+│   ├── useStock.js            # ✅ Stock transactions
+│   ├── useFilters.js          # ✅ Search, filter, sort
+│   └── index.js               # Central export
 ├── pages/
-│   ├── Dashboard/             # KPI overview
-│   ├── Products/              # Product list + search
-│   ├── StockMovements/        # Transaction history
-│   └── Reports/               # Charts + export
+│   ├── Dashboard/             # ✅ KPI cards + Recent Activity
+│   ├── Products/              # ✅ Full CRUD operations
+│   ├── Transactions/          # ⚠️ PLACEHOLDER - Shows "Coming soon"
+│   └── Reports/               # ⚠️ PLACEHOLDER - Shows "Coming soon"
 ├── services/
-│   ├── productService.js      # CRUD operations
-│   ├── stockService.js        # Stock in/out + transaction log
-│   ├── storageService.js      # localStorage abstraction
-│   ├── reportService.js       # Compute stats/aggregations
-│   └── exportService.js       # PDF + CSV generation
+│   ├── productService.js      # ✅ Product business logic
+│   ├── stockService.js        # ✅ Stock transaction logic
+│   ├── storageService.js      # ✅ localStorage abstraction
+│   └── index.js               # Central export
 ├── utils/
-│   ├── skuGenerator.js        # Auto-generate SKU codes
-│   ├── formatters.js          # Currency, date, number formatting
-│   └── validators.js          # Form validation rules
+│   ├── formatters.js          # ✅ Currency, date, stock status
+│   └── skuGenerator.js        # ✅ Auto-generate SKU
 ├── styles/
-│   ├── tokens.css             # CSS Custom Properties (design tokens)
-│   ├── reset.css              # CSS reset
-│   └── utilities.css          # Spacing, flex, grid helpers
-├── App.jsx
-├── main.jsx
-└── index.css
+│   ├── tokens.css             # ✅ CSS Custom Properties
+│   ├── reset.css              # ✅ CSS reset
+│   └── utilities.css          # ✅ Utility classes
+├── App.jsx                    # ✅ Root with routing
+├── main.jsx                   # ✅ Entry point
+└── index.css                  # ✅ Global styles
 ```
+
+### 📊 Pages Implementation Status
+
+| Page | Route | Status | Implementation |
+|------|-------|--------|----------------|
+| Dashboard | `/dashboard` | ✅ Complete | KPI cards (4), Recent Activity (5), Low Stock Alerts |
+| Products | `/products` | ✅ Complete | Full CRUD, Search, Filter, Sort, Stock In/Out |
+| Transactions | `/transactions` | ⚠️ Placeholder | Shows "Coming soon" message only |
+| Reports | `/reports` | ⚠️ Placeholder | Shows "Coming soon" message only |
 
 ---
 
@@ -317,34 +331,60 @@ src/
 
 ## 7. Component Architecture
 
-### 7.1 Page Hierarchy
+### 7.1 Actual Page Hierarchy
 
 ```
-App.jsx  (Router)
-  ├── Layout (Sidebar + Topbar)
-  │     ├── /dashboard      → <DashboardPage>
-  │     │       ├── <KPICard> × 4
-  │     │       ├── <StockValueChart>
-  │     │       ├── <CategoryBreakdown>
-  │     │       ├── <LowStockAlert>
-  │     │       └── <RecentActivity>
-  │     ├── /products       → <ProductsPage>
-  │     │       ├── <SearchBar>
-  │     │       ├── <ProductFilters>
-  │     │       ├── <ProductTable>
-  │     │       │       └── <ProductTableRow> × N
-  │     │       └── Modals:
-  │     │             ├── <ProductForm> (Add/Edit)
-  │     │             ├── <StockInModal>
-  │     │             ├── <StockOutModal>
-  │     │             └── <DeleteConfirmModal>
-  │     ├── /transactions   → <StockMovementsPage>
-  │     │       └── <TransactionHistory> (filterable, paginated)
-  │     └── /reports        → <ReportsPage>
-  │             ├── <ReportChart> × N
-  │             └── <ExportControls> (PDF + CSV buttons)
-  └── <ToastProvider>
+App.jsx  (React Router v7)
+  ├── <ThemeProvider>
+  ├── <InventoryProvider>
+  ├── <BrowserRouter>
+  │     └── <Routes>
+  │           └── <AppLayout>
+  │                 ├── <Sidebar>
+  │                 ├── <Topbar>
+  │                 └── <Outlet>
+  │                       ├── /dashboard    → <DashboardPage> ✅
+  │                       │       ├── KPI Cards (inline)
+  │                       │       ├── Recent Activity (inline)
+  │                       │       └── Low Stock Alerts (inline)
+  │                       │
+  │                       ├── /products     → <ProductsPage> ✅
+  │                       │       ├── <SearchBar>
+  │                       │       ├── Filters (3 × <Select>)
+  │                       │       ├── <ProductTable>
+  │                       │       ├── <ProductForm> (modal)
+  │                       │       └── <StockModal> (modal)
+  │                       │
+  │                       ├── /transactions → <TransactionsPage> ⚠️ PLACEHOLDER
+  │                       │       └── "Coming soon..."
+  │                       │
+  │                       └── /reports      → <ReportsPage> ⚠️ PLACEHOLDER
+  │                               └── "Coming soon..."
+  │
+  └── <Toaster>
 ```
+
+### 7.2 Component Implementation Status
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Button | ✅ Complete | 6 variants (primary, secondary, success, danger, ghost, warning) |
+| Input/Textarea/Select | ✅ Complete | With validation |
+| Modal | ✅ Complete | Keyboard support, preventClose |
+| Badge | ✅ Complete | 4 variants (success, warning, danger, default) |
+| SearchBar | ✅ Complete | 300ms debounce |
+| CategoryModal | ✅ Complete | Dynamic categories |
+| ConfirmDialog | ✅ Complete | Warning variant for unsaved changes |
+| ProductForm | ✅ Complete | Add/Edit, validation, unsaved protection |
+| ProductTable | ✅ Complete | Actions, centered icons |
+| StockModal | ✅ Complete | Stock In/Out with validation |
+| Sidebar | ✅ Complete | Navigation |
+| Topbar | ✅ Complete | Theme toggle |
+| PageWrapper | ✅ Complete | Consistent layout |
+| KPICard | ✅ Inline | In Dashboard |
+| StockValueChart | ⏳ Pending | Not implemented |
+| CategoryBreakdown | ⏳ Pending | Not implemented |
+| TransactionHistory | ⏳ Pending | Placeholder page |
 
 ---
 
@@ -481,7 +521,7 @@ exportService.js:
 
 ## 11. Development Roadmap
 
-### Phase 1 — MVP (Client-Side) ✅ COMPLETED
+### Phase 1 — MVP (Client-Side) ⚠️ PARTIALLY COMPLETE
 
 ```
 Week 1: Foundation ✅
@@ -492,69 +532,102 @@ Week 1: Foundation ✅
   ✅ Context + Reducer (Inventory state)
   ✅ localStorage persistence layer
 
-Week 2: Core CRUD ✅
+Week 2: Core CRUD ✅ COMPLETED
   ✅ Product Form (Add/Edit) with validation
   ✅ Product Table/List view
   ✅ Search (debounced) + Filter + Sort
   ✅ Stock In / Stock Out Modals
-  ✅ Delete with undo toast
-  ✅ Transaction History page
+  ✅ Delete with confirmation
   ✅ Category Management with Modal
   ✅ Unsaved Changes Confirmation Dialog
 
-Week 3: Dashboard & Reports ✅
-  ✅ Dashboard KPI Cards
-  ✅ Recharts: Stock Value by Category (Bar)
-  ✅ Recharts: Low Stock Overview (Horizontal Bar)
-  ✅ Recharts: Stock Movements over time (Line)
-  ✅ Low Stock Alert banner
-  ✅ Recent Activity feed
+Week 3: Dashboard ✅ COMPLETED
+  ✅ Dashboard KPI Cards (4 cards)
+  ✅ Recent Activity feed (last 5 transactions)
+  ✅ Low Stock Alert section
 
-Week 4: Export + Polish ✅
-  ✅ PDF Export (jsPDF + AutoTable)
-  ✅ CSV Export
+Week 4: Reports & Transactions ⚠️ PENDING
+  ⏳ Transaction History Page (placeholder)
+  ⏳ Reports & Analytics Page (placeholder)
+  ⏳ PDF Export (jsPDF + AutoTable)
+  ⏳ CSV Export
+  ⏳ Interactive Charts (Recharts)
+  ⏳ Export functionality
+
+Extra: Polish ✅ COMPLETED
   ✅ Dark/Light mode toggle
-  ✅ Keyboard shortcuts
-  ✅ Mobile responsiveness
-  ✅ UI/UX refinements (action buttons, modals, inputs)
-  ✅ Component architecture finalization
-  ✅ Code cleanup and optimization
+  ✅ Responsive design (mobile)
+  ✅ Toast notifications
+  ✅ Confirmation dialogs
+  ✅ UI/UX refinements
 ```
 
 ### 🎯 Phase 1 Achievements
 
 **Core Features Implemented:**
-- ✅ Complete CRUD operations for products
+- ✅ Complete CRUD operations for products (Add, Edit, Delete, View)
 - ✅ Stock In/Out transaction management with validation
 - ✅ Real-time search, filter, and sort functionality
-- ✅ Dashboard with KPI cards and analytics
-- ✅ Interactive charts (Recharts integration)
-- ✅ Transaction history with audit trail
-- ✅ PDF & CSV export functionality
+- ✅ Dashboard with KPI cards (4 cards: Total Products, Stock Value, Low Stock Alerts, Transactions)
+- ✅ Recent Activity feed (last 5 transactions)
+- ✅ Low Stock Alert section in Dashboard
 - ✅ Dark/Light theme toggle with persistence
 - ✅ Responsive design (desktop, tablet, mobile)
 
 **UI/UX Components:**
-- ✅ Reusable Button component (5 variants, 3 sizes)
+- ✅ Reusable Button component (6 variants: primary, secondary, success, danger, ghost, warning)
 - ✅ Input/Textarea/Select components with validation
-- ✅ Modal component with keyboard support
+- ✅ Modal component with keyboard support & preventClose
 - ✅ Badge component for status indicators
-- ✅ SearchBar with debounced input
+- ✅ SearchBar with debounced input (300ms)
 - ✅ CategoryModal for dynamic category management
 - ✅ ConfirmDialog for user confirmations
 - ✅ ProductForm with unsaved changes protection
-- ✅ ProductTable with action buttons
-- ✅ StockModal for stock transactions
+- ✅ ProductTable with action buttons (centered, 20px icons)
+- ✅ StockModal for stock transactions with validation
+- ✅ PageWrapper for consistent page layout
 
 **Technical Implementation:**
-- ✅ Context API + useReducer for state management
+- ✅ Context API + useReducer for state management (12 actions)
 - ✅ localStorage persistence with schema versioning
 - ✅ Custom hooks (useProducts, useStock, useFilters)
-- ✅ Service layer architecture (separation of concerns)
-- ✅ Utility functions (formatters, SKU generator)
-- ✅ CSS Design tokens system
+- ✅ Service layer architecture (productService, stockService, storageService)
+- ✅ Utility functions (formatters.js, skuGenerator.js)
+- ✅ CSS Design tokens system (tokens.css)
 - ✅ Toast notifications (react-hot-toast)
 - ✅ Icon library (Lucide React)
+
+**Pending (Not Yet Implemented):**
+- ⏳ Transaction History Page (placeholder only)
+- ⏳ Reports & Analytics Page (placeholder only)
+- ⏳ Interactive Charts (Recharts - NOT integrated)
+- ⏳ PDF Export functionality
+- ⏳ CSV Export functionality
+- ⏳ Low Stock Alert banner component
+- ⏳ Recent Activity full component
+- ⏳ Keyboard shortcuts (N, /, Esc)
+
+### Phase 1B — Reports & Transactions (PENDING - High Priority)
+
+```
+Week 5: Transaction History Page ⏳
+  ⏳ Full transaction history table
+  ⏳ Filter by date range
+  ⏳ Filter by transaction type (Stock In/Out)
+  ⏳ Filter by product
+  ⏳ Sort by date, quantity
+  ⏳ Search transactions
+  ⏳ Transaction details modal
+
+Week 6: Reports & Analytics Page ⏳
+  ⏳ Stock Value by Category Chart (Recharts Bar)
+  ⏳ Category Distribution Chart (Recharts Pie)
+  ⏳ Stock Movements Trend (Recharts Line)
+  ⏳ Low Stock Overview (Recharts Horizontal Bar)
+  ⏳ PDF Export (jsPDF + AutoTable)
+  ⏳ CSV Export for products
+  ⏳ CSV Export for transactions
+```
 
 ### Phase 2 — Backend Integration (Future)
 
@@ -574,27 +647,52 @@ Week 4: Export + Polish ✅
 
 ---
 
-## 12. Open Questions
+## 12. Implementation Summary
 
-> These are decisions we need to align on before or during development:
+### ✅ Completed (Phase 1 Core)
 
-| # | Question | Default Assumption |
-|---|----------|--------------------|
-| 1 | **Currency** — What currency symbol to use? | Philippine Peso (₱) |
-| 2 | **Units** — Fixed unit types or free-text? | Free-text input (e.g., pcs, kg, box) |
-| 3 | **Image support** — Should products have images in Phase 1? | Optional — Base64 in localStorage |
-| 4 | **User authentication** — Phase 1 single-user or skip auth? | Skip auth in Phase 1 (single user) |
-| 5 | **Categories** — Predefined list or dynamic (user-created)? | Dynamic — user creates categories |
-| 6 | **Date format** — International or local format? | `MMM DD, YYYY` (e.g., Jun 29, 2026) |
-| 7 | **Stock Out below 0** — Allow negative stock or block? | Block — show error if qty exceeds current stock |
-| 8 | **PDF branding** — Company name/logo on exported reports? | Use "StockFlow IMS" as default |
-| 9 | **Mobile priority** — Fully responsive or desktop-first? | Desktop-first, responsive to tablet/mobile |
-| 10 | **Phase 2 backend** — Is Supabase acceptable or prefer another BaaS/custom API? | Supabase (open to discussion) |
+| Item | Status | Implementation |
+|------|--------|----------------|
+| Product CRUD | ✅ Done | ProductForm, ProductTable, useProducts |
+| Stock In/Out | ✅ Done | StockModal, useStock |
+| Search & Filter | ✅ Done | SearchBar, useFilters |
+| Dashboard | ✅ Done | KPI cards, Recent Activity, Low Stock |
+| Theme Toggle | ✅ Done | ThemeContext |
+| Categories | ✅ Done | CategoryModal, dynamic dropdown |
+| Confirmation Dialogs | ✅ Done | ConfirmDialog component |
+| Unsaved Changes | ✅ Done | preventClose in Modal |
+| localStorage | ✅ Done | storageService with versioning |
+
+### ⏳ Pending (Phase 1B - Reports)
+
+| Item | Priority | Description |
+|------|----------|-------------|
+| Transaction History Page | High | Full table with filters |
+| Reports Page | High | Charts + export buttons |
+| PDF Export | High | jsPDF + AutoTable |
+| CSV Export | High | Blob API for products/transactions |
+| Interactive Charts | Medium | Recharts integration |
+| Keyboard Shortcuts | Low | N, /, Esc handlers |
+
+### 📋 Technology Usage
+
+| Library | Status | Notes |
+|---------|--------|-------|
+| React 19 | ✅ Used | Latest features |
+| Vite 8 | ✅ Used | Fast dev server |
+| React Router v7 | ✅ Used | Client-side routing |
+| Lucide React | ✅ Used | All icons |
+| react-hot-toast | ✅ Used | Notifications |
+| Recharts | ⚠️ Installed | Not integrated into pages |
+| jsPDF | ⚠️ Installed | Not integrated into pages |
+| jsPDF-AutoTable | ⚠️ Installed | Not integrated |
 
 ---
 
-> **📌 Next Step:** Once this architecture is approved, we'll begin execution starting with **installing dependencies**, setting up the **design token system**, and building the **app layout shell**.
+> **📌 Current Status:** Phase 1 Core Complete. Transactions and Reports pages are placeholders.
+> 
+> **Next Step:** Implement Transaction History and Reports pages with charts and export functionality.
 
 ---
 
-*StockFlow IMS — System Architecture v1.0 | Senior Fullstack Developer*
+*StockFlow IMS — System Architecture v1.1 | Updated: 2025-01-20*
