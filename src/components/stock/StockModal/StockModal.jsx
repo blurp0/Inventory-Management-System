@@ -34,14 +34,18 @@ export const StockModal = ({ isOpen, onClose, productId, type }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const result = isStockIn
-      ? stockIn(productId, quantity, reason)
-      : stockOut(productId, quantity, reason);
+    try {
+      const result = isStockIn
+        ? await stockIn(productId, quantity, reason)
+        : await stockOut(productId, quantity, reason);
 
-    setIsSubmitting(false);
-
-    if (result.success) {
-      onClose();
+      if (result?.success) {
+        onClose();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

@@ -1,6 +1,8 @@
+import { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Bell, Search } from 'lucide-react';
+import { Bell, Search, AlertTriangle, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useInventory } from '../../../contexts/InventoryContext';
+import { Badge } from '../../common/Badge/Badge';
 import './Topbar.css';
 
 const PAGE_META = {
@@ -14,9 +16,27 @@ export default function Topbar() {
   const { state, lowStockProducts, outOfStockProducts } = useInventory();
   const location = useLocation();
   const isCollapsed = !state.ui.sidebarOpen;
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const containerRef = useRef(null);
 
   const meta = PAGE_META[location.pathname] ?? { title: 'StockFlow IMS', breadcrumb: 'Home' };
   const hasAlerts = lowStockProducts.length + outOfStockProducts.length > 0;
+
+  // Handle closing the notifications dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    if (isNotificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   return (
     <header className={`topbar${isCollapsed ? ' sidebar-collapsed' : ''}`}>
@@ -34,14 +54,60 @@ export default function Topbar() {
           <Search size={18} />
         </button>
 
-        <button
-          className="topbar__icon-btn"
-          aria-label={hasAlerts ? 'View stock alerts' : 'Notifications'}
-          title="Notifications"
-        >
-          <Bell size={18} />
-          {hasAlerts && <span className="topbar__alert-dot" aria-hidden="true" />}
-        </button>
+        <div className="topbar__notification-container" ref={containerRef}>
+          <button
+            className="topbar__icon-btn"
+            aria-label={hasAlerts ? 'View stock alerts' : 'Notifications'}
+            title="Notifications"
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+          >
+            <Bell size={18} />
+            {hasAlerts && <span className="topbar__alert-dot" aria-hidden="true" />}
+          </button>
+
+          {isNotificationsOpen && (
+            <div className="notifications-dropdown">
+              <div className="notifications-dropdown__header">
+                <h3>Notifications</h3>
+                {hasAlerts && (
+                  <Badge variant="danger">
+                    {lowStockProducts.length + outOfStockProducts.length} Alert(s)
+                  </Badge>
+                )}
+              </div>
+              <div className="notifications-dropdown__content">
+                <div className="notifications-list">
+                  {outOfStockProducts.map((p) => (
+                    <div key={p.id} className="notification-item notification-item--out-of-stock">
+                      <AlertCircle className="notification-item__icon" size={18} />
+                      <div className="notification-item__content">
+                        <h4>{p.name} is Out of Stock</h4>
+                        <p>SKU: <code>{p.sku}</code> · Category: {p.category}</p>
+                      </div>
+                      <Badge variant="danger">0 left</Badge>
+                    </div>
+                  ))}
+                  {lowStockProducts.map((p) => (
+                    <div key={p.id} className="notification-item notification-item--low-stock">
+                      <AlertTriangle className="notification-item__icon" size={18} />
+                      <div className="notification-item__content">
+                        <h4>{p.name} is Low in Stock</h4>
+                        <p>SKU: <code>{p.sku}</code> · Reorder level: {p.reorderLevel}</p>
+                      </div>
+                      <Badge variant="warning">{p.currentStock} left</Badge>
+                    </div>
+                  ))}
+                  {lowStockProducts.length === 0 && outOfStockProducts.length === 0 && (
+                    <div className="notification-item--empty">
+                      <CheckCircle2 size={32} />
+                      <p>No active stock alerts. All items are sufficiently stocked!</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="topbar__divider" aria-hidden="true" />
 

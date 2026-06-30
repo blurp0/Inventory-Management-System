@@ -10,6 +10,7 @@ import { Select } from '../../components/common/Input/Input';
 import { ProductTable } from '../../components/products/ProductTable/ProductTable';
 import { ProductForm } from '../../components/products/ProductForm/ProductForm';
 import { StockModal } from '../../components/stock/StockModal/StockModal';
+import { ConfirmDialog } from '../../components/common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../hooks/useProducts';
 import { useFilters } from '../../hooks/useFilters';
 import { useInventory } from '../../contexts/InventoryContext';
@@ -26,6 +27,10 @@ export default function ProductsPage() {
     isOpen: false,
     productId: null,
     type: null,
+  });
+  const [deleteConfirmState, setDeleteConfirmState] = useState({
+    isOpen: false,
+    productId: null,
   });
 
   const handleAddProduct = () => {
@@ -49,8 +54,13 @@ export default function ProductsPage() {
   };
 
   const handleDeleteProduct = (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      deleteProduct(productId);
+    setDeleteConfirmState({ isOpen: true, productId });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deleteConfirmState.productId) {
+      await deleteProduct(deleteConfirmState.productId);
+      setDeleteConfirmState({ isOpen: false, productId: null });
     }
   };
 
@@ -156,6 +166,17 @@ export default function ProductsPage() {
         onClose={handleCloseStockModal}
         productId={stockModalState.productId}
         type={stockModalState.type}
+      />
+
+      <ConfirmDialog
+        isOpen={deleteConfirmState.isOpen}
+        onClose={() => setDeleteConfirmState({ isOpen: false, productId: null })}
+        onConfirm={handleConfirmDelete}
+        title="Delete Product"
+        message="Are you sure you want to delete this product? This action will soft-delete the product."
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
       />
     </div>
   );

@@ -101,3 +101,183 @@
   cursor: pointer;
   flex-shrink: 0;
 }
+
+/* ── Notifications Dropdown Flyout (Facebook Style) ────────── */
+.topbar__notification-container {
+  position: relative;
+  display: inline-flex;
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -6px;
+  width: 360px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: var(--z-dropdown);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: top right;
+}
+
+/* Arrow indicator pointing to bell button */
+.notifications-dropdown::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 18px;
+  width: 10px;
+  height: 10px;
+  background: var(--color-bg-elevated);
+  border-left: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-border);
+  transform: rotate(45deg);
+  z-index: 1;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.notifications-dropdown__header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.015);
+  position: relative;
+  z-index: 2;
+}
+
+.notifications-dropdown__header h3 {
+  font-size: var(--text-base);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.notifications-dropdown__content {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: var(--space-3);
+}
+
+/* Custom scrollbar for notifications dropdown content */
+.notifications-dropdown__content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notifications-dropdown__content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.notifications-dropdown__content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-full);
+}
+
+.notifications-dropdown__content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.01);
+  transition: all var(--transition-fast);
+}
+
+.notification-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-border);
+}
+
+.notification-item--out-of-stock {
+  border-left: 3px solid var(--color-danger);
+}
+
+.notification-item--out-of-stock .notification-item__icon {
+  color: var(--color-danger);
+}
+
+.notification-item--low-stock {
+  border-left: 3px solid var(--color-warning);
+}
+
+.notification-item--low-stock .notification-item__icon {
+  color: var(--color-warning);
+}
+
+.notification-item__icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.notification-item__content {
+  flex: 1;
+}
+
+.notification-item__content h4 {
+  font-size: var(--text-xs);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin: 0 0 2px 0;
+}
+
+.notification-item__content p {
+  font-size: var(--text-xxs, 10px);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.notification-item__content code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.notification-item--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  color: var(--color-text-secondary);
+  gap: var(--space-2);
+}
+
+.notification-item--empty svg {
+  color: var(--color-success);
+}
+
+.notification-item--empty p {
+  font-size: var(--text-xs);
+  margin: 0;
+  max-width: 220px;
+}

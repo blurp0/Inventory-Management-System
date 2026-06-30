@@ -41,7 +41,6 @@ export const ConfirmDialog = ({
           <Button
             variant="secondary"
             onClick={onClose}
-            fullWidth
           >
             {cancelText}
           </Button>
