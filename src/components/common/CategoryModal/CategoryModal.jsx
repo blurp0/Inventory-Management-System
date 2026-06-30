@@ -14,7 +14,7 @@ export const CategoryModal = ({ isOpen, onClose, onAdd, existingCategories = [] 
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -47,10 +47,15 @@ export const CategoryModal = ({ isOpen, onClose, onAdd, existingCategories = [] 
     }
 
     setIsSubmitting(true);
-    onAdd(trimmedName);
-    setIsSubmitting(false);
-    setCategoryName('');
-    onClose();
+    try {
+      await onAdd(trimmedName);
+      setCategoryName('');
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to add category');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClose = () => {

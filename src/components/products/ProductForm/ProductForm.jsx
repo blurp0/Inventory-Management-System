@@ -10,6 +10,8 @@ import { CategoryModal } from '../../common/CategoryModal/CategoryModal';
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../../hooks/useProducts';
 import { useInventory } from '../../../contexts/InventoryContext';
+import { categoryService } from '../../../services';
+import toast from 'react-hot-toast';
 import './ProductForm.css';
 
 export const ProductForm = ({ isOpen, onClose, productId = null }) => {
@@ -96,17 +98,37 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrors({});
 
-    const result = isEditMode
-      ? updateProduct(productId, formData)
-      : addProduct(formData);
+    try {
+      const result = isEditMode
+        ? await updateProduct(productId, formData)
+        : await addProduct(formData);
 
-    setIsSubmitting(false);
-
-    if (result.success) {
-      onClose();
-    } else if (result.errors) {
-      setErrors(result.errors);
+      if (result.success) {
+        // Reset form to default values on successful submit
+        setFormData({
+          name: '',
+          sku: '',
+          description: '',
+          category: '',
+          unitPrice: '',
+          currentStock: '0',
+          reorderLevel: '10',
+          unit: 'pcs',
+          supplier: '',
+          location: '',
+        });
+        setHasUnsavedChanges(false);
+        onClose();
+      } else if (result.errors) {
+        setErrors(result.errors);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('An unexpected error occurred while saving the product.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,14 +152,24 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
     }
   };
 
-  const handleAddCategory = (categoryName) => {
-    dispatch({ type: 'ADD_CATEGORY', payload: categoryName });
-    setFormData((prev) => {
-      const newData = { ...prev, category: categoryName };
-      const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
-      setHasUnsavedChanges(hasChanges);
-      return newData;
-    });
+  const handleAddCategory = async (categoryName) => {
+    try {
+      await categoryService.add(categoryName);
+      // Update local context cache
+      dispatch({ type: 'ADD_CATEGORY_CACHE', payload: categoryName });
+      
+      setFormData((prev) => {
+        const newData = { ...prev, category: categoryName };
+        const hasChanges = JSON.stringify(newData) !== JSON.stringify(initialFormData);
+        setHasUnsavedChanges(hasChanges);
+        return newData;
+      });
+      
+      toast.success(`Category "${categoryName}" added successfully!`);
+    } catch (err) {
+      toast.error(err.message || 'Failed to add category');
+      throw err; // propagates to CategoryModal to display error and prevent close
+    }
   };
 
   const handleCloseAttempt = () => {
