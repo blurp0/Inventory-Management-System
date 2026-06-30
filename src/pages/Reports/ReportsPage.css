@@ -6,7 +6,8 @@
 .reports-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-4);
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
 }
 
 @media (max-width: 1024px) {
@@ -22,28 +23,56 @@
 }
 
 .report-kpi {
+  background-color: var(--color-bg-surface);
   border: 1px solid var(--color-border);
-  transition: transform var(--transition-fast) ease-in-out, box-shadow var(--transition-fast) ease-in-out;
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  transition:
+    transform var(--transition-fast) ease-in-out,
+    box-shadow var(--transition-fast) ease-in-out,
+    border-color var(--transition-fast);
+  position: relative;
+  overflow: hidden;
 }
 
 .report-kpi:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+  border-color: var(--color-border-hover);
+}
+
+/* Subtle top border for visual cues */
+.report-kpi::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: var(--color-border);
+  transition: background-color var(--transition-fast);
+}
+
+.report-kpi:hover::before {
+  background-color: var(--color-primary);
 }
 
 .report-kpi__icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
 }
 
 .report-kpi__label {
   display: block;
   font-size: var(--text-xs);
   color: var(--color-text-secondary);
-  font-weight: var(--font-medium);
+  font-weight: var(--font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.07em;
   margin-bottom: var(--space-1);
 }
 
@@ -66,6 +95,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 @media (max-width: 768px) {
@@ -76,10 +106,39 @@
 
 .export-card {
   border: 1px solid var(--color-border);
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.export-card:hover {
+  border-color: var(--color-border-hover);
+}
+
+/* Left colored borders for visual grouping */
+.export-card.pdf-export {
+  border-left: 4px solid var(--color-accent);
+}
+
+.export-card.csv-export {
+  border-left: 4px solid var(--color-success);
 }
 
 .export-card h4 {
   font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.export-card p {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+  line-height: var(--leading-normal);
 }
 
 /* ── Charts Grid ───────────────────────────────────────────── */
@@ -97,18 +156,28 @@
 
 .chart-card {
   border: 1px solid var(--color-border);
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition-fast);
+}
+
+.chart-card:hover {
+  border-color: var(--color-border-hover);
 }
 
 .chart-title {
-  font-size: var(--text-sm);
-  font-weight: var(--font-semibold);
-  color: var(--color-text-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  color: var(--color-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-2);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .chart-empty {
@@ -120,6 +189,7 @@
   color: var(--color-text-muted);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
+  background-color: var(--color-bg-base);
 }
 
 /* Recharts Custom Tooltip Styles */

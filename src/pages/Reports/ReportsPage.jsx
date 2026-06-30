@@ -186,7 +186,7 @@ export default function ReportsPage() {
       {/* 2. Export Actions Grid */}
       <div className="export-grid mb-8">
         {/* PDF Export Panel */}
-        <div className="export-card bg-glass rounded-xl p-5 border shadow-sm flex flex-col justify-between">
+        <div className="export-card pdf-export bg-glass rounded-xl p-5 border shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex-start gap-2 mb-2 text-primary font-bold">
               <FileText size={20} />
@@ -217,7 +217,7 @@ export default function ReportsPage() {
         </div>
 
         {/* CSV Export Panel */}
-        <div className="export-card bg-glass rounded-xl p-5 border shadow-sm flex flex-col justify-between">
+        <div className="export-card csv-export bg-glass rounded-xl p-5 border shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex-start gap-2 mb-2 text-accent font-bold">
               <FileSpreadsheet size={20} />
