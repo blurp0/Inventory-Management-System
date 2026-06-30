@@ -10,7 +10,7 @@ import { CategoryModal } from '../../common/CategoryModal/CategoryModal';
 import { ConfirmDialog } from '../../common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../../hooks/useProducts';
 import { useInventory } from '../../../contexts/InventoryContext';
-import { categoryService } from '../../../services';
+import { categoryService, storageService, productService } from '../../../services';
 import toast from 'react-hot-toast';
 import './ProductForm.css';
 
@@ -30,7 +30,12 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
     unit: 'pcs',
     supplier: '',
     location: '',
+    imageUrl: '',
   });
+
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [imageDeleted, setImageDeleted] = useState(false);
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -53,6 +58,7 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
       unit: 'pcs',
       supplier: '',
       location: '',
+      imageUrl: '',
     };
     
     if (isEditMode && productId) {
@@ -69,15 +75,20 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           unit: product.unit,
           supplier: product.supplier || '',
           location: product.location || '',
+          imageUrl: product.imageUrl || '',
         };
         setFormData(editData);
         setInitialFormData(editData);
+        setImagePreview(product.imageUrl || '');
       }
     } else {
       setFormData(initialData);
       setInitialFormData(initialData);
+      setImagePreview('');
     }
     setErrors({});
+    setImageFile(null);
+    setImageDeleted(false);
     setHasUnsavedChanges(false);
   }, [isOpen, productId]); // Removed getProductById and isEditMode from dependencies
 
@@ -95,18 +106,95 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
     }
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image size must be under 2MB.');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('File must be an image.');
+      return;
+    }
+
+    setImageFile(file);
+    setImageDeleted(false);
+    setHasUnsavedChanges(true);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setImageDeleted(true);
+    setFormData((prev) => ({ ...prev, imageUrl: '' }));
+    setHasUnsavedChanges(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrors({});
 
     try {
+      let finalImageUrl = formData.imageUrl;
+
+      // Handle Image deletion in Edit Mode
+      if (isEditMode && imageDeleted && formData.imageUrl === '') {
+        try {
+          await storageService.deleteProductImage(productId);
+          finalImageUrl = '';
+        } catch (err) {
+          console.warn('Failed to delete image from storage:', err);
+        }
+      }
+
+      // Handle new Image upload in Edit Mode
+      if (isEditMode && imageFile) {
+        try {
+          finalImageUrl = await storageService.uploadProductImage(imageFile, productId);
+        } catch (err) {
+          toast.error('Failed to upload product image.');
+          throw err;
+        }
+      }
+
+      const submissionData = {
+        ...formData,
+        imageUrl: finalImageUrl,
+      };
+
       const result = isEditMode
-        ? await updateProduct(productId, formData)
-        : await addProduct(formData);
+        ? await updateProduct(productId, submissionData)
+        : await addProduct(submissionData);
 
       if (result.success) {
-        // Reset form to default values on successful submit
+        // Handle image upload for a new product
+        if (!isEditMode && imageFile && result.product?.id) {
+          try {
+            const uploadedUrl = await storageService.uploadProductImage(imageFile, result.product.id);
+            await productService.updateProduct(result.product.id, {
+              ...submissionData,
+              imageUrl: uploadedUrl,
+            });
+            dispatch({
+              type: 'UPDATE_PRODUCT_CACHE',
+              payload: { ...result.product, imageUrl: uploadedUrl },
+            });
+          } catch (err) {
+            console.error('Failed to upload image for new product:', err);
+            toast.error('Product saved, but image upload failed.');
+          }
+        }
+
         setFormData({
           name: '',
           sku: '',
@@ -118,7 +206,11 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
           unit: 'pcs',
           supplier: '',
           location: '',
+          imageUrl: '',
         });
+        setImageFile(null);
+        setImagePreview('');
+        setImageDeleted(false);
         setHasUnsavedChanges(false);
         onClose();
       } else if (result.errors) {
@@ -286,6 +378,39 @@ export const ProductForm = ({ isOpen, onClose, productId = null }) => {
             onChange={handleChange}
             placeholder="e.g., Shelf A-3"
           />
+        </div>
+
+        <div className="product-form__image-section">
+          <label className="input-label">Product Image</label>
+          <div className="product-form__image-container">
+            {imagePreview ? (
+              <div className="product-form__image-preview-wrapper">
+                <img src={imagePreview} alt="Preview" className="product-form__image-preview" />
+                <button
+                  type="button"
+                  className="product-form__image-remove-btn"
+                  onClick={handleRemoveImage}
+                  title="Remove Image"
+                >
+                  ✕ Remove Image
+                </button>
+              </div>
+            ) : (
+              <label className="product-form__image-placeholder">
+                <span className="product-form__image-icon">📷</span>
+                <span className="product-form__image-text">
+                  Drag and drop or <strong>click to upload</strong> product image
+                </span>
+                <span className="product-form__image-subtext">PNG, JPG, WEBP up to 2MB</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  style={{ display: 'none' }}
+                />
+              </label>
+            )}
+          </div>
         </div>
 
         <Textarea

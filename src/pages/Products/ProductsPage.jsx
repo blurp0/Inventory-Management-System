@@ -3,26 +3,30 @@
  * Main products page with CRUD operations
  */
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Upload } from 'lucide-react';
 import { Button } from '../../components/common/Button/Button';
 import { SearchBar } from '../../components/common/SearchBar/SearchBar';
 import { Select } from '../../components/common/Input/Input';
 import { ProductTable } from '../../components/products/ProductTable/ProductTable';
 import { ProductForm } from '../../components/products/ProductForm/ProductForm';
+import { ImportModal } from '../../components/products/ImportModal/ImportModal';
 import { StockModal } from '../../components/stock/StockModal/StockModal';
 import { ConfirmDialog } from '../../components/common/ConfirmDialog/ConfirmDialog';
 import { useProducts } from '../../hooks/useProducts';
 import { useFilters } from '../../hooks/useFilters';
 import { useInventory } from '../../contexts/InventoryContext';
+import { useAuth } from '../../contexts/AuthContext';
 import './ProductsPage.css';
 
 export default function ProductsPage() {
   const { filteredProducts, deleteProduct } = useProducts();
   const { filters, setSearch, setCategory, setStatus, setSortBy } = useFilters();
   const { state } = useInventory();
+  const { canEditProducts } = useAuth();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [stockModalState, setStockModalState] = useState({
     isOpen: false,
     productId: null,
@@ -34,11 +38,13 @@ export default function ProductsPage() {
   });
 
   const handleAddProduct = () => {
+    if (!canEditProducts) return;
     setEditingProductId(null);
     setIsFormOpen(true);
   };
 
   useEffect(() => {
+    if (!canEditProducts) return;
     const handleShortcut = () => {
       handleAddProduct();
     };
@@ -46,7 +52,7 @@ export default function ProductsPage() {
     return () => {
       window.removeEventListener('shortcut-add-product', handleShortcut);
     };
-  }, []);
+  }, [canEditProducts]);
 
   const handleEditProduct = (productId) => {
     setEditingProductId(productId);
@@ -103,13 +109,24 @@ export default function ProductsPage() {
           <h1>Products</h1>
           <p>Manage your product inventory</p>
         </div>
-        <Button
-          variant="primary"
-          icon={<Plus size={18} />}
-          onClick={handleAddProduct}
-        >
-          Add Product
-        </Button>
+        {canEditProducts && (
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <Button
+              variant="secondary"
+              icon={<Upload size={18} />}
+              onClick={() => setIsImportOpen(true)}
+            >
+              Import CSV
+            </Button>
+            <Button
+              variant="primary"
+              icon={<Plus size={18} />}
+              onClick={handleAddProduct}
+            >
+              Add Product
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="products-page__toolbar">
@@ -159,6 +176,11 @@ export default function ProductsPage() {
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
         productId={editingProductId}
+      />
+
+      <ImportModal
+        isOpen={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
       />
 
       <StockModal

@@ -5,6 +5,7 @@
 import { Package, Edit, Trash2, TrendingUp, TrendingDown } from 'lucide-react';
 import { Badge } from '../../common/Badge/Badge';
 import { Button } from '../../common/Button/Button';
+import { useAuth } from '../../../contexts/AuthContext';
 import { formatCurrency, formatDate, getStockStatus } from '../../../utils/formatters';
 import './ProductTable.css';
 
@@ -15,6 +16,8 @@ export const ProductTable = ({
   onStockIn,
   onStockOut,
 }) => {
+  const { canEditProducts, canDeleteProducts, canAdjustStock } = useAuth();
+
   if (products.length === 0) {
     return (
       <div className="product-table-empty">
@@ -24,6 +27,8 @@ export const ProductTable = ({
       </div>
     );
   }
+
+  const showActions = canAdjustStock || canEditProducts || canDeleteProducts;
 
   return (
     <div className="product-table-wrapper">
@@ -38,7 +43,7 @@ export const ProductTable = ({
             <th>Stock Value</th>
             <th>Status</th>
             <th>Updated</th>
-            <th>Actions</th>
+            {showActions && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -52,13 +57,22 @@ export const ProductTable = ({
                   <code className="product-sku">{product.sku}</code>
                 </td>
                 <td>
-                  <div className="product-name">
-                    <strong>{product.name}</strong>
-                    {product.description && (
-                      <span className="product-description">
-                        {product.description}
-                      </span>
-                    )}
+                  <div className="product-name-container">
+                    <div className="product-thumbnail">
+                      {product.imageUrl ? (
+                        <img src={product.imageUrl} alt={product.name} />
+                      ) : (
+                        <Package size={18} />
+                      )}
+                    </div>
+                    <div className="product-name">
+                      <strong>{product.name}</strong>
+                      {product.description && (
+                        <span className="product-description">
+                          {product.description}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </td>
                 <td>{product.category}</td>
@@ -73,38 +87,48 @@ export const ProductTable = ({
                   <Badge variant={status.variant}>{status.label}</Badge>
                 </td>
                 <td className="product-date">{formatDate(product.updatedAt)}</td>
-                <td>
-                  <div className="product-actions">
-                    <Button
-                      size="small"
-                      variant="ghost"
-                      icon={<TrendingUp size={16} />}
-                      onClick={() => onStockIn(product.id)}
-                      title="Stock In"
-                    />
-                    <Button
-                      size="small"
-                      variant="ghost"
-                      icon={<TrendingDown size={16} />}
-                      onClick={() => onStockOut(product.id)}
-                      title="Stock Out"
-                    />
-                    <Button
-                      size="small"
-                      variant="ghost"
-                      icon={<Edit size={16} />}
-                      onClick={() => onEdit(product.id)}
-                      title="Edit"
-                    />
-                    <Button
-                      size="small"
-                      variant="ghost"
-                      icon={<Trash2 size={16} />}
-                      onClick={() => onDelete(product.id)}
-                      title="Delete"
-                    />
-                  </div>
-                </td>
+                {showActions && (
+                  <td>
+                    <div className="product-actions">
+                      {canAdjustStock && (
+                        <>
+                          <Button
+                            size="small"
+                            variant="ghost"
+                            icon={<TrendingUp size={16} />}
+                            onClick={() => onStockIn(product.id)}
+                            title="Stock In"
+                          />
+                          <Button
+                            size="small"
+                            variant="ghost"
+                            icon={<TrendingDown size={16} />}
+                            onClick={() => onStockOut(product.id)}
+                            title="Stock Out"
+                          />
+                        </>
+                      )}
+                      {canEditProducts && (
+                        <Button
+                          size="small"
+                          variant="ghost"
+                          icon={<Edit size={16} />}
+                          onClick={() => onEdit(product.id)}
+                          title="Edit"
+                        />
+                      )}
+                      {canDeleteProducts && (
+                        <Button
+                          size="small"
+                          variant="ghost"
+                          icon={<Trash2 size={16} />}
+                          onClick={() => onDelete(product.id)}
+                          title="Delete"
+                        />
+                      )}
+                    </div>
+                  </td>
+                )}
               </tr>
             );
           })}
