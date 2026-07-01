@@ -69,6 +69,12 @@ export const inventoryReducer = (state, action) => {
     case 'ADD_TRANSACTION_CACHE':
       return { ...state, transactions: [action.payload, ...state.transactions] };
 
+    case 'REMOVE_TRANSACTION_CACHE':
+      return {
+        ...state,
+        transactions: state.transactions.filter((t) => t.id !== action.payload),
+      };
+
     case 'ADD_CATEGORY_CACHE':
       return {
         ...state,

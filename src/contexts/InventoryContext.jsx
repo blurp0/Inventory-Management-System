@@ -67,12 +67,14 @@ export const InventoryProvider = ({ children }) => {
       )
       .subscribe();
 
-    // Transactions channel
+    // Transactions channel — listen for ALL changes (INSERT, UPDATE, DELETE)
+    // so that when a product is deleted and its transactions are removed,
+    // the frontend immediately reflects the change.
     const transactionsChannel = supabase
       .channel('realtime-transactions')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'stock_transactions' },
+        { event: '*', schema: 'public', table: 'stock_transactions' },
         () => fetchTransactions()
       )
       .subscribe();
@@ -125,8 +127,8 @@ export const InventoryProvider = ({ children }) => {
     if (status !== 'all') {
       result = result.filter((p) => {
         if (status === 'out_of_stock') return p.currentStock === 0;
-        if (status === 'low_stock')    return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
-        if (status === 'in_stock')     return p.currentStock > p.reorderLevel;
+        if (status === 'low_stock') return p.currentStock > 0 && p.currentStock <= p.reorderLevel;
+        if (status === 'in_stock') return p.currentStock > p.reorderLevel;
         return true;
       });
     }

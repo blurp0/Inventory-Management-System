@@ -5,12 +5,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { InventoryProvider } from './contexts/InventoryContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import AppLayout from './components/layout/AppLayout';
-import LoginPage      from './pages/Auth/LoginPage';
-import DashboardPage  from './pages/Dashboard/DashboardPage';
-import ProductsPage   from './pages/Products/ProductsPage';
+import LoginPage from './pages/Auth/LoginPage';
+import DashboardPage from './pages/Dashboard/DashboardPage';
+import ProductsPage from './pages/Products/ProductsPage';
 import TransactionsPage from './pages/Transactions/TransactionsPage';
-import ReportsPage    from './pages/Reports/ReportsPage';
-import SettingsPage   from './pages/Settings/SettingsPage';
+import ReportsPage from './pages/Reports/ReportsPage';
+import SettingsPage from './pages/Settings/SettingsPage';
+import DeletedProductsPage from './pages/DeletedProducts/DeletedProductsPage';
 
 export default function App() {
   return (
@@ -25,12 +26,13 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<InventoryProvider><AppLayout /></InventoryProvider>}>
                 <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="/dashboard"    element={<DashboardPage />} />
-                <Route path="/products"     element={<ProductsPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/products" element={<ProductsPage />} />
                 <Route path="/transactions" element={<TransactionsPage />} />
-                <Route path="/reports"      element={<ReportsPage />} />
-                <Route path="/settings"     element={<SettingsPage />} />
-                <Route path="*"             element={<Navigate to="/dashboard" replace />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/deleted-products" element={<DeletedProductsPage />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Route>
             </Route>
           </Routes>

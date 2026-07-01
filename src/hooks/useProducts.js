@@ -4,10 +4,11 @@
  */
 import { useInventory } from '../contexts/InventoryContext';
 import { productService } from '../services/productService';
+import { deletedProductService } from '../services/deletedProductService';
 import toast from 'react-hot-toast';
 
 export const useProducts = () => {
-  const { state, dispatch, fetchProducts, activeProducts, filteredProducts } = useInventory();
+  const { state, dispatch, fetchProducts, fetchTransactions, activeProducts, filteredProducts } = useInventory();
 
   const addProduct = async (data) => {
     const validation = productService.validateProduct(data);
@@ -60,6 +61,12 @@ export const useProducts = () => {
       await productService.deleteProduct(id);
       // Optimistic: remove from cache immediately
       dispatch({ type: 'REMOVE_PRODUCT_CACHE', payload: id });
+      // Also remove all cached transactions for this product since the DB trigger
+      // deletes them from stock_transactions on soft-delete.
+      // This prevents "Unknown Product" from showing in the transaction list.
+      state.transactions
+        .filter((t) => t.productId === id)
+        .forEach((t) => dispatch({ type: 'REMOVE_TRANSACTION_CACHE', payload: t.id }));
 
       const toastId = toast.success(`"${product.name}" deleted. Tap to undo.`, {
         duration: 5000,
@@ -95,6 +102,34 @@ export const useProducts = () => {
   const getProductById = (id) => state.products.find((p) => p.id === id);
   const getProductBySKU = (sku) => state.products.find((p) => p.sku === sku);
 
+  /** Fetch all deleted/archived products (admin only) */
+  const getDeletedProducts = async () => {
+    try {
+      return await deletedProductService.getDeletedProducts();
+    } catch (err) {
+      toast.error(`Failed to fetch deleted products: ${err.message}`);
+      return [];
+    }
+  };
+
+  /** Restore a product from the archive by its original product ID */
+  const restoreFromArchive = async (productId) => {
+    try {
+      const result = await deletedProductService.restoreProduct(productId);
+      if (result.success) {
+        await fetchProducts(); // Full re-fetch to get restored product back
+        await fetchTransactions(); // Re-fetch transactions since they were re-inserted
+        toast.success('Product restored from archive!');
+        return { success: true };
+      }
+      toast.error('Failed to restore product from archive');
+      return { success: false };
+    } catch (err) {
+      toast.error(`Failed to restore product: ${err.message}`);
+      return { success: false, error: err.message };
+    }
+  };
+
   return {
     products: activeProducts,
     filteredProducts,
@@ -104,6 +139,8 @@ export const useProducts = () => {
     updateProduct,
     deleteProduct,
     restoreProduct,
+    getDeletedProducts,
+    restoreFromArchive,
     getProductById,
     getProductBySKU,
   };

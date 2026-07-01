@@ -11,6 +11,7 @@ import {
   Sun,
   Moon,
   Settings,
+  Archive,
 } from 'lucide-react';
 import { useInventory } from '../../../contexts/InventoryContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -27,8 +28,8 @@ const NAV_ITEMS = [
   {
     section: 'Inventory',
     items: [
-      { to: '/products',     icon: Package,         label: 'Products' },
-      { to: '/transactions', icon: ArrowLeftRight,   label: 'Transactions' },
+      { to: '/products', icon: Package, label: 'Products' },
+      { to: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     ],
   },
   {
@@ -98,6 +99,23 @@ export default function Sidebar() {
             })}
           </div>
         ))}
+
+        {/* Admin-only: Deleted Products archive */}
+        {(role === 'admin') && (
+          <div key="admin-section">
+            <div className="sidebar__section-label">Administration</div>
+            <NavLink
+              to="/deleted-products"
+              className={({ isActive }) =>
+                `sidebar__nav-item${isActive ? ' active' : ''}`
+              }
+              title={isCollapsed ? 'Deleted Products' : undefined}
+            >
+              <Archive className="sidebar__nav-icon" size={20} aria-hidden="true" />
+              <span className="sidebar__nav-label">Deleted Products</span>
+            </NavLink>
+          </div>
+        )}
 
         {/* Low stock quick-access */}
         {alertCount > 0 && (

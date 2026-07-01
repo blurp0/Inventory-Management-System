@@ -7,7 +7,7 @@ import { stockService } from '../services/stockService';
 import toast from 'react-hot-toast';
 
 export const useStock = () => {
-  const { state, dispatch } = useInventory();
+  const { state, dispatch, fetchTransactions, fetchProducts } = useInventory();
 
   const stockIn = async (productId, quantity, reason, performedBy = 'Admin') => {
     const product = state.products.find((p) => p.id === productId);
@@ -33,6 +33,11 @@ export const useStock = () => {
         payload: { id: productId, currentStock: newStock },
       });
       dispatch({ type: 'ADD_TRANSACTION_CACHE', payload: transaction });
+
+      // Re-fetch from server to ensure all pages have consistent data
+      // (Realtime subscription may lag, so we force a refresh)
+      fetchTransactions();
+      fetchProducts();
 
       toast.success(`Added ${quantity} units to "${product.name}"`);
       return { success: true, transaction };
@@ -65,6 +70,10 @@ export const useStock = () => {
         payload: { id: productId, currentStock: newStock },
       });
       dispatch({ type: 'ADD_TRANSACTION_CACHE', payload: transaction });
+
+      // Re-fetch from server to ensure all pages have consistent data
+      fetchTransactions();
+      fetchProducts();
 
       toast.success(`Removed ${quantity} units from "${product.name}"`);
       return { success: true, transaction };
