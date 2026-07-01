@@ -1,10 +1,10 @@
 # 📦 Inventory Management System — System Architecture
 
 > **Project:** StockFlow IMS  
-> **Version:** 2.3 — Phase 5 Blueprint Added (Advanced Scale & Integrations)  
+> **Version:** 3.0 — Phase 3 Complete (RBAC, Deleted Products Archive, Manager Permissions)  
 > **Stack:** React 19 + Vite + Supabase Cloud Backend (PostgreSQL, OAuth, RLS, Storage)  
-> **Last Updated:** 2026-06-30  
-> **Status:** ✅ Phase 2 Complete — Cloud Backend, OAuth Auth, Storage, and Realtime Done  
+> **Last Updated:** 2026-07-01  
+> **Status:** ✅ Phase 3 Complete — RBAC Hardened, Manager Stock Permissions, Deleted Products Archive & Restore  
 
 ---
 
@@ -198,12 +198,14 @@ src/
 │   ├── Dashboard/             # KPI cards + Staggered entrance animations
 │   ├── Products/              # Full CRUD page
 │   ├── Transactions/          # Transaction history + query filters + delta modals
-│   └── Reports/               # KPI metrics + export cards + 4 Recharts SVGs
+│   ├── Reports/               # KPI metrics + export cards + 4 Recharts SVGs
+│   └── DeletedProducts/       # Admin restore page for archived products
 ├── services/
 │   ├── productService.js      # Product business logic
 │   ├── stockService.js        # Stock transaction logic
 │   ├── exportService.js       # Client-side PDF/CSV generation
 │   ├── storageService.js      # localStorage version check & write abstractions
+│   ├── deletedProductService.js # Deleted product archive & restore RPC calls
 │   └── index.js               # Central export
 ├── utils/
 │   ├── formatters.js          # Currency, date, stock status formatter
@@ -275,10 +277,12 @@ App.jsx  (React Router v7)
   │                 ├── <Sidebar> (with theme toggle & collapse actions)
   │                 ├── <Topbar>
   │                 └── <Outlet>
-  │                       ├── /dashboard    → <DashboardPage> (staggered KPI cards + alerts)
-  │                       ├── /products     → <ProductsPage> (crud + filter select triggers)
-  │                       ├── /transactions → <TransactionsPage> (ledger history + filters)
-  │                       └── /reports      → <ReportsPage> (4 charts + PDF/CSV export engine)
+  │                       ├── /dashboard         → <DashboardPage> (staggered KPI cards + alerts)
+  │                       ├── /products          → <ProductsPage> (crud + filter select triggers)
+  │                       ├── /transactions      → <TransactionsPage> (ledger history + filters)
+  │                       ├── /reports           → <ReportsPage> (4 charts + PDF/CSV export engine)
+  │                       ├── /settings          → <SettingsPage> (profile, preferences, security)
+  │                       └── /deleted-products  → <DeletedProductsPage> (admin: restore archived products)
   └── <Toaster>
 ```
 
@@ -347,16 +351,36 @@ All exports are resolved client-side in [exportService.js](file:///c:/Users/Joma
 *   ✅ **Realtime Integration**: Subscribed context data models to Postgres Changes for automated local state updates on remote mutations.
 *   ✅ **UI/UX Polishing**: Refactored `ConfirmDialog` layouts, modal state timers, and implemented dynamic category caches and outside-click closeable notifications flyout.
 
-### Phase 3 — Postponed with Partial Implementation
-Phase 3 is currently postponed to preserve focus on core Phase 2 backend stability. The repository already includes several Phase 3 feature components, while the remaining advanced extensions are deferred to a later release.
+### Phase 3 — Completed ✅
+Phase 3 is now complete. The following features have been implemented, hardened, and are fully operational:
 
 *   ✅ **Product Image Upload UI**: Fully implemented in `src/components/products/ProductForm/ProductForm.jsx` with image preview, upload, and Supabase storage support.
 *   ✅ **Bulk Data Operations**: Implemented via `src/components/products/ImportModal/ImportModal.jsx` for bulk CSV product import.
 *   ⚠️ **Multi-Warehouse Support**: `warehouseService.js` and the Settings warehouse CRUD UI are implemented, but product-side warehouse assignment is not yet wired into the product form or product data model.
 *   ✅ **User Settings & Profile Management**: Profile editing, avatar upload, theme preference, default landing page, low stock threshold settings, and password change are implemented in `src/pages/Settings/SettingsPage.jsx`.
-*   ⚠️ **Role-Based Access Control (RBAC)**: Basic role lookup and view gating exist in `src/contexts/AuthContext.jsx` and `src/components/common/ProtectedRoute.jsx`, but full role management UI and comprehensive endpoint-level RBAC enforcement remain deferred.
+*   ✅ **Role-Based Access Control (RBAC)**: 
+    *   **RLS Policy Fix (Manager Permissions)**: Corrected Row Level Security policies on `products` and `stock_transactions` tables to allow `manager` role users to perform stock adjustments (Stock In/Out) and product edits. Added `is_admin()`, `is_manager()`, and `is_admin_or_manager()` helper functions with `SECURITY DEFINER` to safely query `user_roles` without self-referencing deadlocks. Policies:
+        *   `products`: SELECT (all authenticated), INSERT/UPDATE (admin + manager), soft-delete (admin only)
+        *   `stock_transactions`: SELECT (all authenticated), INSERT (admin + manager), DELETE (admin only)
+*   ✅ **Deleted Products Archive & Restore**: 
+    *   **`deleted_products` Archive Table**: Stores a full product snapshot (SKU, name, price, stock, supplier, etc.) plus `transactions_data` as JSONB — preserving every stock transaction linked to the deleted product.
+    *   **Auto-Archive Trigger**: When a product is soft-deleted (`is_deleted = true`), the `on_product_soft_delete` trigger automatically:
+        1. Collects all `stock_transactions` rows for that product as a JSON array
+        2. Inserts the complete record into `deleted_products`
+        3. Deletes the transactions from `stock_transactions` (no orphaned records)
+    *   **Restore Functionality (`restore_deleted_product`)**: Reverses the deletion by setting `is_deleted = false` on the product AND re-inserting all archived transactions back into `stock_transactions` with their original timestamps and metadata.
+    *   **Admin Restore UI (`/deleted-products`)**: 
+        *   Searchable table showing archived products (name, SKU, category, price, stock at deletion, transaction count, deletion date)
+        *   Clickable transaction count button → opens modal viewer with full archived transaction history (Type, Quantity, Previous/New Stock, Reason, Performed By, Date)
+        *   "Restore" button with confirmation dialog — restores product and re-inserts all transactions instantly
+        *   Accessible only to `admin` users via sidebar navigation and route guard
+    *   **Real-time Cache Updates**: 
+        *   On delete: cached transactions for the deleted product are immediately removed from the frontend state (no "Unknown Product" ghost entries)
+        *   On restore: `fetchProducts()` + `fetchTransactions()` are called to refresh all data
+        *   Realtime subscriptions listen for `*` events (INSERT, UPDATE, DELETE) on both `products` and `stock_transactions` tables
+    *   **Immediate UI Feedback**: Stock In/Out operations now trigger server re-fetches after optimistic cache updates, ensuring all views (Transactions page, Dashboard, Product table) reflect the latest data without requiring page refresh.
 
-> Deferred Phase 3 deliverables are: product warehouse binding, richer role administration, OAuth provider linking, and expanded access-control policies.
+> Deferred Phase 3 deliverables: product warehouse binding, richer role administration, OAuth provider linking, and expanded access-control policies.
 
 ### Phase 4 — Production Readiness & Security Hardening
 *   [ ] **Automated Reorder Alerts**: Supabase Edge Functions integrated with Resend/SendGrid/Twilio to trigger emails/SMS when items fall below reorder levels.
@@ -482,4 +506,4 @@ To position **StockFlow IMS** as a market-leading SaaS solution or a highly inte
 
 ---
 
-*StockFlow IMS — System Architecture v2.3 | Updated: 2026-06-30*
+*StockFlow IMS — System Architecture v3.0 | Updated: 2026-07-01*
